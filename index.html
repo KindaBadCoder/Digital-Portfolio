@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Eric Zhu</title>
-<meta name="description" content="Eric Zhu — mathematics and biology at Stanford. Selected work, experiments, contact.">
+<meta name="description" content="Eric Zhu — mathematics and biology at Stanford. Selected work, projects, contact.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:,">
 
@@ -233,7 +233,7 @@ a:focus-visible,
   white-space: nowrap;
   transition: border-color var(--step) ease, color var(--step) ease;
 }
-.tag .yr { color: var(--ink-faint); }
+.tag .yr { color: var(--ink-faint); margin-left: 1.2rem; }
 .entry a:hover .tag,
 .entry a:focus-visible .tag { border-top-color: var(--accent); color: var(--ink); }
 
@@ -260,7 +260,7 @@ a:focus-visible,
 }
 .mark--svg {
   border: 0; padding: 0;
-  width: 1.3rem; height: 1.3rem;   /* matches the letter marks' new size, just square instead of boxed */
+  min-width: 1.3rem; height: 1.3rem;   /* matches the letter marks' new size, just square instead of boxed */
 }
 .mark svg { width: 100%; height: 100%; fill: currentColor; }
 /* raster logo (icon.img): recolored to a single flat palette tone. The trick is
@@ -283,17 +283,17 @@ a:focus-visible,
 .entry a:focus-visible .mark { border-color: var(--accent); color: var(--accent); }
 
 /* ============================================================================
-   EXPERIMENTS — deliberately lighter. one line, one link, no ceremony.
+   PROJECTS — deliberately lighter. one line, one link, no ceremony.
    ========================================================================= */
-.experiments { list-style: none; }
-.experiment {
+.projects { list-style: none; }
+.project {
   display: flex; flex-wrap: wrap; align-items: baseline;
   gap: 0 .6rem;
   padding: .7rem 0;
   line-height: var(--first-line);   /* first line box matches the rail label's */
 }
-.experiment:first-child { padding-top: 0; }   /* this is what was pushing the list off the label */
-.experiment + .experiment { border-top: 1px solid var(--rule); }
+.project:first-child { padding-top: 0; }   /* this is what was pushing the list off the label */
+.project + .project { border-top: 1px solid var(--rule); }
 .exp-name { font-weight: 600; }
 .exp-year { font-family: var(--mono); font-size: .72rem; letter-spacing: .045em; color: var(--ink-faint); margin-left: auto; }
 .exp-desc { flex: 1 1 100%; margin: .1rem 0 0; color: var(--ink-muted); font-size: 1rem; line-height: 1.5; }
@@ -458,9 +458,9 @@ h1[tabindex]:focus { outline: none; }
    Everything you'll ever change is in the CONTENT block below. Nothing beneath
    it needs touching.
 
-   Add a project  -> copy any object in WORK, change the fields, drop it in
+   Add some work  -> copy any object in WORK, change the fields, drop it in
                      (newest first). The subpage builds itself.
-   Add an experiment -> one line in EXPERIMENTS.
+   Add a project -> one line in PROJECTS.
    Text fields    -> a string is a paragraph; an array of strings is a list.
    Links          -> href: null renders as a greyed "add link" stub, so you
                      never ship a dead URL by accident.
@@ -486,8 +486,8 @@ const PROFILE = {
   name: "Eric Zhu",
   railNote: "stanford ’29",
   lede: [
-    "I study mathematics and biology at Stanford. The through-line is structure: how a genome becomes a body with a shape, how a leaf survives more light than it can use, and what mathematics is adequate to describe either. When the biology turns into a data problem — which it usually does — I write the code.",
-    "Right now I'm in the Qiu Lab, working on tissue in three dimensions. Before that: two wet-lab summers, a lot of gels, and a competition-math habit I haven't shaken."
+    "I study mathematics and biology at Stanford. On the side, I'm figuring out what I want to do after.",
+    "Right now I'm in the Qiu Lab, modeling embryonic RNA expression in three dimensions. Apart from biological research, I'm also interested in investment, competition math, music, and a bit of computer science."
   ],
   elsewhere: [
     { k: "email",    label: "ekzhu@stanford.edu",         href: "mailto:ekzhu@stanford.edu" },
@@ -495,16 +495,16 @@ const PROFILE = {
     { k: "github",   label: "{{github.com/your-username}}", href: null },
     { k: "cv",       label: "{{résumé (pdf)}}",             href: null }
   ],
-  colophon: "Set in Charter, with a monospace for the marginalia. No images anywhere, on purpose."
+  colophon: "by Eric Zhu  |  © 2026"
 };
 
 const WORK = [
   {
     slug: "qiu-lab",
     title: "Qiu Lab, Stanford",
-    icon: { mark: "St", title: "Stanford University", img: "https://raw.githubusercontent.com/KindaBadCoder/Digital-Portfolio/refs/heads/main/Stanford%20Medicine.png"},
-    blurb: "Modeling embryonic tissue architecture from 3D spatial transcriptomics.",
-    tags: [ { role: "undergraduate researcher", years: "2026 —" } ],
+    icon: { mark: "St", title: "Stanford University", img: "icons/Stanford Medicine.png"},
+    blurb: "Using 3D spatial transcriptomics to model RNA expression across time and space",
+    tags: [ { role: "researcher", years: "2026—" } ],
     context: "Spatial transcriptomics measures gene expression in intact tissue rather than in cells that have been dissociated and pooled, so every transcriptome arrives with the coordinates it was read at. That turns an embryo into something you can treat geometrically: expression as a field over tissue, not a table of cells.",
     role: "Undergraduate researcher since February 2026. {{Roughly ten hours a week, mostly on the computational side, with enough bench time to know where the data comes from and how it can lie.}}",
     did: [
@@ -514,6 +514,56 @@ const WORK = [
     ],
     outcome: "{{In progress — this is the thing I'm most curious about right now.}} The surprise so far is that the hard part isn't the model. It's deciding what counts as the same cell across two sections, which is a question nobody can answer for you.",
     links: [ { label: "lab site", href: null } ]
+  },
+  {
+    slug: "england-lab",
+    title: "England Lab, UCSF",
+    icon: { mark: "Uc", title: "UCSF", img: "icons/UCSF.png"},
+    blurb: "Screening novel small-molecule drug candidates for Parkinson's Disease",
+    tags: [ { role: "research intern", years: "summer 2024" } ],
+    context: "The lab screens novel small molecules against {{cellular models of}} Parkinson's disease. The question for any candidate is unglamorous and two-part: does it change what the cell expresses, and does it bind what you think it binds.",
+    role: "Full-time intern for the summer. Ran assays, and presented findings at weekly lab meetings.",
+    did: [
+      "qPCR end to end — cell culture, RNA extraction, cDNA synthesis — to characterize expression changes under compound treatment.",
+      "SDS-PAGE and western blots to characterize protein bands of interest.",
+      "Affinity purification with biotin and biotinylated compounds, to pull down and locate intracellular drug binding sites."
+    ],
+    outcome: "{{The results fed into how the group triaged candidates.}} The real lesson was in the negatives: most of a screen is learning to tell 'no effect' apart from 'the assay didn't work,' which is a question about controls, not chemistry.",
+    links: []
+  },
+  {
+    slug: "eureka-therapeutics",
+    title: "Eureka Therapeutics",
+    icon: { mark: "Eu", title: "Eureka Therapeutics", img: "icons/Eureka.png"},
+    blurb: "First time at a real bench, researching T-cell therapies for solid tumors",
+    tags: [ { role: "intern", years: "summer 2023" } ],
+    context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
+    role: "Summer intern, {{on the cell-culture and protein side.}}",
+    did: [
+      "Cultured HEPG2 cells as the model line for the work.",
+      "Ran SDS-PAGE and western blots to identify proteins in culture solutions.",
+      "Sat close enough to flow cytometry, bio-layer interferometry and HPLC to know what each is for {{— and not close enough to claim I can run them.}}"
+    ],
+    outcome: "First time in a real lab, at sixteen. What I took away is how much of biology is technique: a protocol is a hypothesis, and it has consequences if you do the steps in the wrong order.",
+    links: []
+  },
+ {
+    slug: "mathimatika",
+    title: "Mathimatika",
+    icon: { mark: "Ma", title: "Mathimatika", img: "icons/mathimatika.png"},
+    blurb: "An online math competition. 21 people, 40 original problems, over $4,000 in prizes.",
+    tags: [
+      { role: "co-founder, project manager", years: "2021" },
+    ],
+    context: "In 2021 there was nowhere online to take a contest that felt like the real thing. {{So a few of us wrote one}} — original problems, open to anyone, with prizes large enough that people took it seriously.",
+    role: "Co-founder and project manager. I ran the team of 21 and owned test day.",
+    did: [
+      "Coordinated the writing, test-solving and revision of 40 original competition problems.",
+      "Ran test-day logistics: the contest portal, submission data, scoring.",
+      "Handled the prize pool — over $4,000 — and everything around getting 100+ participants to the start line."
+    ],
+    outcome: "More than 100 people sat it. {{What I'd do differently: we wrote the problems before we decided who the contest was for, and you could see it in the difficulty curve.}}",
+    links: [ { label: "contest site", href: null } ]
   },
   {
     slug: "conference-alerts",
@@ -558,84 +608,16 @@ const WORK = [
     ],
     outcome: "Mentoring taught me more than presenting did. The hardest thing to hand someone is permission to say out loud that a figure doesn't show what the authors say it shows.",
     links: []
-  },
-  {
-    slug: "england-lab",
-    title: "England Lab, UCSF",
-    icon: { mark: "Uc", title: "UCSF", svg: "<svg>UCSF.svg</svg>"},
-    blurb: "Small-molecule candidates for Parkinson's, and the assays that say whether they do anything.",
-    tags: [ { role: "full-time intern", years: "summer 2024" } ],
-    context: "The lab screens novel small molecules against {{cellular models of}} Parkinson's disease. The question for any candidate is unglamorous and two-part: does it change what the cell expresses, and does it bind what you think it binds.",
-    role: "Full-time intern for the summer. Ran assays, and presented findings at weekly lab meetings.",
-    did: [
-      "qPCR end to end — cell culture, RNA extraction, cDNA synthesis — to characterize expression changes under compound treatment.",
-      "SDS-PAGE and western blots to characterize protein bands of interest.",
-      "Affinity purification with biotin and biotinylated compounds, to pull down and locate intracellular drug binding sites."
-    ],
-    outcome: "{{The results fed into how the group triaged candidates.}} The real lesson was in the negatives: most of a screen is learning to tell 'no effect' apart from 'the assay didn't work,' which is a question about controls, not chemistry.",
-    links: []
-  },
-  {
-    slug: "eureka-therapeutics",
-    title: "Eureka Therapeutics",
-    icon: { mark: "Eu", title: "Eureka Therapeutics", img: "https://raw.githubusercontent.com/KindaBadCoder/Digital-Portfolio/refs/heads/main/Eureka.png"},
-    blurb: "T-cell therapies for solid tumors. My first real bench.",
-    tags: [ { role: "intern", years: "summer 2023" } ],
-    context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
-    role: "Summer intern, {{on the cell-culture and protein side.}}",
-    did: [
-      "Cultured HEPG2 cells as the model line for the work.",
-      "Ran SDS-PAGE and western blots to identify proteins in culture solutions.",
-      "Sat close enough to flow cytometry, bio-layer interferometry and HPLC to know what each is for {{— and not close enough to claim I can run them.}}"
-    ],
-    outcome: "First time in a real lab, at sixteen. What I took away is how much of biology is technique: a protocol is a hypothesis, and it has consequences if you do the steps in the wrong order.",
-    links: []
-  },
-  {
-    slug: "mathimatika",
-    title: "Mathimatika",
-    blurb: "An online math competition. 21 people, 40 original problems, over $4,000 in prizes.",
-    tags: [
-      { role: "co-founder", years: "2021" },
-      { role: "project manager", years: "2021" }
-    ],
-    context: "In 2021 there was nowhere online to take a contest that felt like the real thing. {{So a few of us wrote one}} — original problems, open to anyone, with prizes large enough that people took it seriously.",
-    role: "Co-founder and project manager. I ran the team of 21 and owned test day.",
-    did: [
-      "Coordinated the writing, test-solving and revision of 40 original competition problems.",
-      "Ran test-day logistics: the contest portal, submission data, scoring.",
-      "Handled the prize pool — over $4,000 — and everything around getting 100+ participants to the start line."
-    ],
-    outcome: "More than 100 people sat it. {{What I'd do differently: we wrote the problems before we decided who the contest was for, and you could see it in the difficulty curve.}}",
-    links: [ { label: "contest site", href: null } ]
   }
 ];
 
-const EXPERIMENTS = [
+const PROJECTS = [
   {
     name: "Competition math textbook",
     year: "2020",
-    desc: "142 pages, 17 chapters, written with eight friends over a summer. Unofficial and unpolished, and still the best way I've found to learn something properly.",
+    desc: "142 pages, 14 chapters, written with eight friends. A 'textbook' passion project",
     links: [ { label: "pdf", href: null } ]
   },
-  {
-    name: "{{Life, in a terminal}}",
-    year: "{{2025}}",
-    desc: "{{Conway's game of life, rendered in ncurses. The rules take three lines; the behavior doesn't.}}",
-    links: [ { label: "code", href: null } ]
-  },
-  {
-    name: "{{tm}}",
-    year: "{{2024}}",
-    desc: "{{A one-file CLI for primer melting temperatures, written after computing one by hand one too many times.}}",
-    links: [ { label: "code", href: null } ]
-  },
-  {
-    name: "{{pset.sty}}",
-    year: "{{2025}}",
-    desc: "{{The LaTeX preamble I actually use, so a problem set never starts from an empty file.}}",
-    links: [ { label: "code", href: null } ]
-  }
 ];
 
 /* =========================  END OF CONTENT  ============================== */
@@ -723,9 +705,9 @@ function home() {
   );
 
   const exps = block(
-    '<h2 class="rail-label" id="h-exp">experiments</h2>',
-    '<ul class="experiments">' + EXPERIMENTS.map(e =>
-      '<li class="experiment">' +
+    '<h2 class="rail-label" id="h-exp">projects</h2>',
+    '<ul class="projects">' + PROJECTS.map(e =>
+      '<li class="project">' +
         '<span class="exp-name">' + t(e.name) + "</span>" +
         (e.links || []).map(l => l.href
           ? '<a class="exp-link" href="' + esc(l.href) + '" rel="noopener">' + t(l.label) + " \u2197</a>"
