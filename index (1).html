@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eric Zhu</title>
+<meta name="description" content="Eric Zhu — mathematics and biology at Stanford. Selected work, experiments, contact.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+
+<style>
+/* ============================================================================
+   TOKENS
+   Palette is deliberately cool, not cream. The one accent is Coomassie blue —
+   the stain that turns up on every protein gel Eric has run. It appears only
+   on links, focus, and the hover state of a work entry. Nowhere else.
+   ========================================================================= */
+:root {
+  --paper:      #f4f5f6;
+  --paper-2:    #eceef0;   /* barely-there hover wash */
+  --ink:        #14171a;
+  --ink-muted:  #5d6670;
+  --ink-faint:  #8a939c;
+  --rule:       #d9dde0;
+  --accent:     #17458c;   /* Coomassie */
+  --accent-dim: #17458c33;
+
+  --serif: "Charter", "Bitstream Charter", "Iowan Old Style", "Sitka Text", Cambria, Georgia, serif;
+  --mono:  ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --measure: 40rem;   /* 640px content column — the brief's constraint */
+  --rail:    8rem;    /* the margin. section labels and dates live out here —
+                         sized to the longest label ("what came of it"), no wider */
+  --gutter:  1.25rem;    /* air between rail and content. the page widens to pay for it,
+                         the measure never does. */
+  --first-line: 1.55rem;  /* every section's first line box. rail labels use it too,
+                             which is what keeps a label optically level with its content. */
+
+  --step: 180ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:      #101315;
+    --paper-2:    #171b1e;
+    --ink:        #e4e7e9;
+    --ink-muted:  #96a0a8;
+    --ink-faint:  #6d767e;
+    --rule:       #2a3034;
+    --accent:     #8fb4e8;
+    --accent-dim: #8fb4e844;
+  }
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.62;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0 0 1.1rem; }
+p:last-child { margin-bottom: 0; }
+ul, ol { margin: 0; padding: 0; }
+
+a { color: inherit; }
+a:focus-visible,
+.skip:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 1px; }
+
+.skip {
+  position: absolute; left: -9999px;
+  font-family: var(--mono); font-size: .8rem;
+  background: var(--paper); color: var(--accent);
+  padding: .5rem .75rem; z-index: 10;
+}
+.skip:focus { left: 1rem; top: 1rem; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ============================================================================
+   SPINE — a two-column grid: margin rail + measure. Every block sits on it,
+   so section labels, dates and back-links all hang in the same left margin,
+   like the marginalia in a lab notebook. Below 60rem the rail folds on top.
+   Whitespace does the separating — no rules, no lines.
+   ========================================================================= */
+.wrap {
+  max-width: calc(var(--rail) + var(--gutter) + var(--measure));
+  margin-inline: auto;
+  padding: 5.5rem 2rem 6rem;
+}
+.block {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, var(--measure));
+  column-gap: var(--gutter);
+  margin-bottom: 6rem;
+}
+.block:last-child { margin-bottom: 0; }
+.block > .rail { grid-column: 1; position: relative; text-align: right; }
+.block > .body { grid-column: 2; min-width: 0; }
+
+.rail-label, .rail-note {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 400;
+  line-height: var(--first-line);
+  letter-spacing: .05em;
+  text-transform: lowercase;
+  color: var(--ink-faint);
+}
+.rail-label {
+  position: relative;
+  white-space: nowrap;
+}
+.rail-label::before {
+  content: "";
+  position: absolute;
+  top: -.5rem; right: 0;   /* sits in the gap above, so the label text itself doesn't shift */
+  width: 2.25rem;   /* a fraction of the rail, not the full column */
+  border-top: 1px solid var(--rule);
+}
+.rail-note { margin-top: -.3rem; }   /* trims the leading above a display-size title */
+
+@media (max-width: 60rem) {
+  .wrap { padding-top: 3.5rem; }
+  .block { grid-template-columns: minmax(0, 1fr); }
+  .block > .rail { grid-column: 1; text-align: left; margin-bottom: .9rem; }
+  .block > .body { grid-column: 1; }
+  .rail-note { margin-top: 0; }
+  .rail-label::before { right: auto; left: 0; }
+}
+
+/* ============================================================================
+   INTRO
+   ========================================================================= */
+.name {
+  margin: -.3rem 0 1.4rem;
+  font-family: var(--serif);
+  font-size: 2.1rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -.012em;
+}
+.lede { font-size: 1.19rem; }
+.lede-2 { color: var(--ink-muted); font-size: 1.0rem; line-height: 1.6; }
+
+/* ============================================================================
+   WORK ENTRIES
+   Tags are segmented top-rules, not pills — read them as a strip of tabs:
+   one stint per segment, so a history is visible at a glance. On hover the
+   segments take the ink of the accent and an arrow appears out in the rail.
+   ========================================================================= */
+.entries { list-style: none; }
+.entry { position: relative; }
+.entry + .entry { margin-top: 2.1rem; }
+
+.entry a {
+  display: block;
+  text-decoration: none;
+  padding: .55rem .7rem .75rem;
+  margin: -.55rem -.7rem -.75rem;   /* pad the hit area without shifting the type */
+  border-radius: 2px;
+  transition: background var(--step) ease;
+}
+.entry a:hover { background: var(--paper-2); }
+.entry a:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.entry-head {
+  display: flex;
+  align-items: center;
+  gap: 0 .5rem;
+  line-height: var(--first-line);
+}
+.entry-title {
+  margin: 0;
+  font-size: 1.19rem;
+  font-weight: 600;
+  line-height: var(--first-line);
+  letter-spacing: -.005em;
+  color: var(--ink);
+  transition: color var(--step) ease;
+}
+.entry a:hover .entry-title,
+.entry a:focus-visible .entry-title { color: var(--accent); }
+
+/* the arrow sits at the right edge of the entry, out of the rail's way */
+.arrow {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: .95rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-.35rem);
+  transition: opacity var(--step) ease, transform var(--step) ease;
+}
+.entry a:hover .arrow,
+.entry a:focus-visible .arrow { opacity: 1; transform: translateX(0); }
+
+.entry-blurb {
+  margin: .35rem 0 0;
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.tags {
+  display: flex; flex-wrap: wrap;
+  gap: 0 1.1rem;
+  list-style: none;
+  margin: .8rem 0 0;
+}
+.tag {
+  border-top: 1px solid var(--rule);
+  padding-top: .38rem;
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .045em;
+  text-transform: lowercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  transition: border-color var(--step) ease, color var(--step) ease;
+}
+.tag .yr { color: var(--ink-faint); }
+.entry a:hover .tag,
+.entry a:focus-visible .tag { border-top-color: var(--accent); color: var(--ink); }
+
+/* ----------------------------------------------------------------------------
+   INSTITUTION MARKS — a boxed two-letter symbol, set like an element on the
+   periodic table, or a real logo — either an inline SVG (icon.svg) or an
+   actual image URL (icon.img) can be dropped in instead of the letter pair.
+   ------------------------------------------------------------------------- */
+.mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+  min-width: 1.3rem; height: 1.3rem;
+  margin-left: .35rem;   /* extra air between the title and the mark */
+  padding: 0 .22rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: .62rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: .02em;
+  color: var(--ink-faint);
+  transition: border-color var(--step) ease, color var(--step) ease;
+}
+.mark--svg {
+  border: 0; padding: 0;
+  width: 1.3rem; height: 1.3rem;   /* matches the letter marks' new size, just square instead of boxed */
+  position: relative; overflow: hidden; isolation: isolate;   /* contains the tint overlay below */
+}
+.mark svg { width: 100%; height: 100%; fill: currentColor; }
+.mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* generic tint: any uploaded photo or vector is first desaturated to grayscale
+   (so its own colors can't clash), then recolored with the mark's current ink
+   color via a `color` blend — which keeps the image's light-and-dark DETAIL and
+   only swaps its hue into the palette, so a seal still reads as a seal. The
+   overlay is clipped by the graphic's own alpha (--tint-mask, an SVG <mask>
+   generated per-icon by mark()) so the tint can't spill onto the transparent
+   area around the logo. */
+.mark--svg img,
+.mark--svg svg { filter: grayscale(1) contrast(1.05); }
+.mark--svg::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: currentColor;        /* = --ink-faint, or --accent on hover */
+  mix-blend-mode: color;
+  -webkit-mask-image: var(--tint-mask);
+  mask-image: var(--tint-mask);
+  pointer-events: none;
+}
+.entry a:hover .mark,
+.entry a:focus-visible .mark { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================================
+   EXPERIMENTS — deliberately lighter. one line, one link, no ceremony.
+   ========================================================================= */
+.experiments { list-style: none; }
+.experiment {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 0 .6rem;
+  padding: .7rem 0;
+  line-height: var(--first-line);   /* first line box matches the rail label's */
+}
+.experiment:first-child { padding-top: 0; }   /* this is what was pushing the list off the label */
+.experiment + .experiment { border-top: 1px solid var(--rule); }
+.exp-name { font-weight: 600; }
+.exp-year { font-family: var(--mono); font-size: .72rem; letter-spacing: .045em; color: var(--ink-faint); margin-left: auto; }
+.exp-desc { flex: 1 1 100%; margin: .1rem 0 0; color: var(--ink-muted); font-size: 1rem; line-height: 1.5; }
+
+.link, .exp-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-dim);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+  transition: text-decoration-color var(--step) ease;
+}
+.link:hover, .exp-link:hover { text-decoration-color: var(--accent); }
+.exp-link { font-family: var(--mono); font-size: .75rem; letter-spacing: .04em; }
+
+/* ============================================================================
+   ELSEWHERE
+   ========================================================================= */
+.elsewhere { list-style: none; display: grid; gap: .5rem; line-height: var(--first-line); }
+.elsewhere .k {
+  display: inline-block; min-width: 5.5rem;
+  font-family: var(--mono); font-size: .75rem; letter-spacing: .045em;
+  text-transform: lowercase; color: var(--ink-faint);
+}
+.colophon {
+  margin-top: 4.5rem;
+  font-family: var(--mono); font-size: .72rem; line-height: 1.7;
+  letter-spacing: .03em; color: var(--ink-faint);
+}
+
+/* ============================================================================
+   PROJECT PAGE — same spine, so every project reads identically:
+   context / my role / what i did / what came of it / links, labels in the margin.
+   ========================================================================= */
+.title-row { display: flex; align-items: center; gap: 0 .55rem; }
+.title-row .mark { min-width: 1.45rem; height: 1.45rem; font-size: .68rem; }
+.title-row .mark--svg { width: 1.45rem; height: 1.45rem; }
+.proj-title {
+  margin: -.3rem 0 0;
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.012em;
+}
+.proj-blurb { margin: .8rem 0 0; color: var(--ink-muted); font-size: 1.06rem; }
+.proj-title + .tags { margin-top: 1.2rem; }
+.back { text-decoration: none; color: var(--ink-faint); transition: color var(--step) ease; }
+.back:hover { color: var(--accent); }
+.prose ul { list-style: none; }
+.prose li { position: relative; padding-left: 1.1rem; margin-bottom: .6rem; }
+.prose li::before {
+  content: "\2013";
+  position: absolute; left: 0; top: 0;
+  color: var(--ink-faint);
+}
+.prose li:last-child { margin-bottom: 0; }
+.links-list { list-style: none; display: grid; gap: .45rem; font-size: 1rem; }
+
+.pager {
+  display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.1rem;
+  font-family: var(--mono); font-size: .78rem; letter-spacing: .04em;
+}
+.pager a { text-decoration: none; color: var(--ink-muted); transition: color var(--step) ease; }
+.pager a:hover { color: var(--accent); }
+.pager .nxt { text-align: right; }
+.pager .nxt span { display: block; color: var(--ink-faint); font-size: .72rem; margin-bottom: .15rem; }
+
+/* ============================================================================
+   THE PIN — sticks to the top while you scroll and names the section you're in.
+   Sits over the rail, so it reads as the current margin label rather than a
+   navbar. Fades out at the top of the page, where the answer is obvious.
+   ========================================================================= */
+.pin-layer {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex; justify-content: center;
+}
+.pin-inner {
+  width: 100%;
+  max-width: calc(var(--rail) + var(--gutter) + var(--measure));
+  padding: 0 2rem;
+}
+.pin {
+  display: inline-flex; align-items: center; gap: .4rem;
+  margin-top: 1.1rem;
+  padding: .3rem .6rem;
+  border: 1px solid var(--accent-dim);
+  border-radius: 3px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: lowercase;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateY(-.25rem);
+  transition: opacity var(--step) ease, transform var(--step) ease;
+}
+.pin.on { opacity: 1; transform: translateY(0); }
+.pin::before {
+  content: "";
+  width: .3rem; height: .3rem;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+@media (max-width: 60rem) {
+  .pin-inner { padding: 0; }
+  .pin {
+    display: flex; width: 100%;
+    margin-top: 0;
+    padding: .5rem 1.5rem;
+    border: 0; border-bottom: 1px solid var(--rule); border-radius: 0;
+  }
+}
+
+/* ============================================================================
+   DRAFT MARKS — dotted underline = copy Claude invented. Set DRAFT = false
+   in the script below and both the marks and the banner disappear.
+   ========================================================================= */
+.ph { text-decoration: underline dotted var(--accent-dim); text-underline-offset: .22em; text-decoration-thickness: 1px; }
+.banner {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: .75rem 1.5rem;
+  font-family: var(--mono); font-size: .74rem; line-height: 1.6; letter-spacing: .02em;
+  color: var(--ink-muted);
+}
+.banner b { color: var(--ink); font-weight: 600; }
+.banner .ph { text-decoration-color: var(--accent); }
+
+/* ============================================================================
+   TRANSITIONS — a fade and 4px of travel between home and a project. Nothing else.
+   ========================================================================= */
+#view { transition: opacity var(--step) ease, transform var(--step) ease; }
+#view.leaving { opacity: 0; transform: translateY(4px); }
+#view:focus { outline: none; }
+h1[tabindex]:focus { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<div id="banner"></div>
+<div class="pin-layer" aria-hidden="true"><div class="pin-inner"><span class="pin" id="pin"></span></div></div>
+<main class="wrap" id="view" tabindex="-1"></main>
+<p class="sr-only" role="status" aria-live="polite" id="announce"></p>
+
+<script>
+/* ===========================================================================
+   HOW TO EDIT THIS SITE
+   ---------------------------------------------------------------------------
+   Everything you'll ever change is in the CONTENT block below. Nothing beneath
+   it needs touching.
+
+   Add a project  -> copy any object in WORK, change the fields, drop it in
+                     (newest first). The subpage builds itself.
+   Add an experiment -> one line in EXPERIMENTS.
+   Text fields    -> a string is a paragraph; an array of strings is a list.
+   Links          -> href: null renders as a greyed "add link" stub, so you
+                     never ship a dead URL by accident.
+   Placeholder    -> wrap anything Claude made up (or that you haven't verified)
+                     in {{double braces}}. It renders with a dotted underline
+                     while DRAFT is true.
+   Ship it        -> set DRAFT = false. Banner and dotted marks vanish.
+   Institution    -> icon: { mark: "St", title: "Stanford University" } draws a
+                     boxed two-letter symbol next to the title. To use a real
+                     logo instead, either paste an SVG:
+                       icon: { title: "Stanford University", svg: "<svg …>…</svg>" }
+                     (keep it monochrome and it will inherit the ink; a 1em
+                     square viewBox works best) — or point at an image URL:
+                       icon: { title: "Stanford University", img: "https://…/logo.png" }
+                     Only formal institutions get one.
+   =========================================================================== */
+
+const DRAFT = true;
+
+/* ===========================  CONTENT  =================================== */
+
+const PROFILE = {
+  name: "Eric Zhu",
+  railNote: "stanford ’29",
+  lede: [
+    "I study mathematics and biology at Stanford. The through-line is structure: how a genome becomes a body with a shape, how a leaf survives more light than it can use, and what mathematics is adequate to describe either. When the biology turns into a data problem — which it usually does — I write the code.",
+    "Right now I'm in the Qiu Lab, working on tissue in three dimensions. Before that: two wet-lab summers, a lot of gels, and a competition-math habit I haven't shaken."
+  ],
+  elsewhere: [
+    { k: "email",    label: "ekzhu@stanford.edu",         href: "mailto:ekzhu@stanford.edu" },
+    { k: "linkedin", label: "linkedin.com/in/eric-k-zhu", href: "https://www.linkedin.com/in/eric-k-zhu/" },
+    { k: "github",   label: "{{github.com/your-username}}", href: null },
+    { k: "cv",       label: "{{résumé (pdf)}}",             href: null }
+  ],
+  colophon: "Set in Charter, with a monospace for the marginalia. No images anywhere, on purpose."
+};
+
+const WORK = [
+  {
+    slug: "qiu-lab",
+    title: "Qiu Lab, Stanford",
+    icon: { mark: "St", title: "Stanford University", img: "https://github.com/KindaBadCoder/Digital-Portfolio/blob/main/Stanford%20Medicine.png"},
+    blurb: "Modeling embryonic tissue architecture from 3D spatial transcriptomics.",
+    tags: [ { role: "undergraduate researcher", years: "2026 —" } ],
+    context: "Spatial transcriptomics measures gene expression in intact tissue rather than in cells that have been dissociated and pooled, so every transcriptome arrives with the coordinates it was read at. That turns an embryo into something you can treat geometrically: expression as a field over tissue, not a table of cells.",
+    role: "Undergraduate researcher since February 2026. {{Roughly ten hours a week, mostly on the computational side, with enough bench time to know where the data comes from and how it can lie.}}",
+    did: [
+      "{{Work on the pipeline that turns raw spatial reads into per-cell expression matrices with usable coordinates — filtering, normalization, and the unglamorous parts of quality control.}}",
+      "{{Prototype in silico reconstructions of tissue architecture: registering sections into a common 3D frame, then checking that known markers land where developmental biology says they should.}}",
+      "{{Read enough of the developmental literature to recognize a plausible answer before trusting a plot.}}"
+    ],
+    outcome: "{{In progress — this is the thing I'm most curious about right now.}} The surprise so far is that the hard part isn't the model. It's deciding what counts as the same cell across two sections, which is a question nobody can answer for you.",
+    links: [ { label: "lab site", href: null } ]
+  },
+  {
+    slug: "conference-alerts",
+    title: "Conference alert system",
+    blurb: "A scraper that watches medical conference sites so a lab doesn't have to.",
+    tags: [ { role: "solo build", years: "summer 2025" } ],
+    context: "Abstract windows, schedule changes and deadlines for medical conferences live on a few dozen sites that update without warning and never announce it. {{The alternative was checking them by hand, on a rota, forever.}}",
+    role: "Wrote it and ran it. Python, Selenium, {{one afternoon of design and a month of small corrections.}}",
+    did: [
+      "Drove each site with Selenium where the content was rendered client-side, and fell back to plain requests where it wasn't.",
+      "{{Diffed every fetch against the previous snapshot, so it alerts on the four fields that matter — dates, schedule, abstracts, announcements — and stays quiet about the rest.}}",
+      "{{Kept sites and selectors in a config file, so adding a conference is one entry rather than one script.}}"
+    ],
+    outcome: "{{It replaced a recurring manual check for the group.}} What it actually taught me is about brittleness: selectors rot, and the right design is the one that fails loudly instead of quietly returning nothing and looking like good news.",
+    links: [ { label: "code", href: null } ]
+  },
+  {
+    slug: "photoprotection",
+    title: "Photoprotection",
+    blurb: "A year on how plants survive more light than they can use.",
+    tags: [ { role: "independent study", years: "2024–25" } ],
+    context: "A leaf in full sun absorbs far more energy than photosynthesis can process. What happens to the excess — dissipated as heat, or left to make singlet oxygen and destroy the machinery that captured it — is settled on picosecond timescales by a handful of pigments.",
+    role: "Self-directed, over eight months. {{Met with a faculty advisor every few weeks to argue about what I'd read.}}",
+    did: "I came at it from three directions rather than one: the cell biology (thylakoid organization, the xanthophyll cycle), the chemistry (carotenoids as quenchers), and the physical chemistry (energy transfer, and why quenching has to be fast to matter at all). {{Kept notes throughout and wrote a short synthesis at the end.}}",
+    outcome: "The thing that stuck: photoprotection is one word for a stack of different mechanisms operating at different timescales, and most of the live disagreement in the literature is about which one dominates when. {{It's also where I noticed I like the physical-chemistry layer of biology best.}}",
+    links: [ { label: "write-up", href: null } ]
+  },
+  {
+    slug: "journal-club",
+    title: "Journal club — CRISPR and glioblastoma",
+    blurb: "A year of reading papers closely, then a year of teaching two juniors to.",
+    tags: [
+      { role: "member", years: "2024" },
+      { role: "mentor", years: "2025" }
+    ],
+    context: "A small group that read one paper at a time and properly: an hour on methods, relevance and limitations, not a summary. I presented a paper on therapeutic CRISPR for glioblastoma — a cancer where the delivery problem is at least as hard as the editing problem.",
+    role: "Member through 2024, then mentor in 2025 to two juniors giving their first presentations.",
+    did: [
+      "Presented and defended the CRISPR/glioblastoma paper: delivery, off-target effects, and whether the model system could support the claim being made.",
+      "Argued about {{roughly a dozen}} papers across the year, mostly about controls.",
+      "Took two juniors end to end: choosing a paper they could actually carry, reading it with them, rehearsing the talk."
+    ],
+    outcome: "Mentoring taught me more than presenting did. The hardest thing to hand someone is permission to say out loud that a figure doesn't show what the authors say it shows.",
+    links: []
+  },
+  {
+    slug: "england-lab",
+    title: "England Lab, UCSF",
+    icon: { mark: "Uc", title: "UCSF" },
+    blurb: "Small-molecule candidates for Parkinson's, and the assays that say whether they do anything.",
+    tags: [ { role: "full-time intern", years: "summer 2024" } ],
+    context: "The lab screens novel small molecules against {{cellular models of}} Parkinson's disease. The question for any candidate is unglamorous and two-part: does it change what the cell expresses, and does it bind what you think it binds.",
+    role: "Full-time intern for the summer. Ran assays, and presented findings at weekly lab meetings.",
+    did: [
+      "qPCR end to end — cell culture, RNA extraction, cDNA synthesis — to characterize expression changes under compound treatment.",
+      "SDS-PAGE and western blots to characterize protein bands of interest.",
+      "Affinity purification with biotin and biotinylated compounds, to pull down and locate intracellular drug binding sites."
+    ],
+    outcome: "{{The results fed into how the group triaged candidates.}} The real lesson was in the negatives: most of a screen is learning to tell 'no effect' apart from 'the assay didn't work,' which is a question about controls, not chemistry.",
+    links: []
+  },
+  {
+    slug: "eureka-therapeutics",
+    title: "Eureka Therapeutics",
+    icon: { mark: "Eu", title: "Eureka Therapeutics" },
+    blurb: "T-cell therapies for solid tumors. My first real bench.",
+    tags: [ { role: "intern", years: "summer 2023" } ],
+    context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
+    role: "Summer intern, {{on the cell-culture and protein side.}}",
+    did: [
+      "Cultured HEPG2 cells as the model line for the work.",
+      "Ran SDS-PAGE and western blots to identify proteins in culture solutions.",
+      "Sat close enough to flow cytometry, bio-layer interferometry and HPLC to know what each is for {{— and not close enough to claim I can run them.}}"
+    ],
+    outcome: "First time in a real lab, at sixteen. What I took away is how much of biology is technique: a protocol is a hypothesis, and it has consequences if you do the steps in the wrong order.",
+    links: []
+  },
+  {
+    slug: "mathimatika",
+    title: "Mathimatika",
+    blurb: "An online math competition. 21 people, 40 original problems, over $4,000 in prizes.",
+    tags: [
+      { role: "co-founder", years: "2021" },
+      { role: "project manager", years: "2021" }
+    ],
+    context: "In 2021 there was nowhere online to take a contest that felt like the real thing. {{So a few of us wrote one}} — original problems, open to anyone, with prizes large enough that people took it seriously.",
+    role: "Co-founder and project manager. I ran the team of 21 and owned test day.",
+    did: [
+      "Coordinated the writing, test-solving and revision of 40 original competition problems.",
+      "Ran test-day logistics: the contest portal, submission data, scoring.",
+      "Handled the prize pool — over $4,000 — and everything around getting 100+ participants to the start line."
+    ],
+    outcome: "More than 100 people sat it. {{What I'd do differently: we wrote the problems before we decided who the contest was for, and you could see it in the difficulty curve.}}",
+    links: [ { label: "contest site", href: null } ]
+  }
+];
+
+const EXPERIMENTS = [
+  {
+    name: "Competition math textbook",
+    year: "2020",
+    desc: "142 pages, 17 chapters, written with eight friends over a summer. Unofficial and unpolished, and still the best way I've found to learn something properly.",
+    links: [ { label: "pdf", href: null } ]
+  },
+  {
+    name: "{{Life, in a terminal}}",
+    year: "{{2025}}",
+    desc: "{{Conway's game of life, rendered in ncurses. The rules take three lines; the behavior doesn't.}}",
+    links: [ { label: "code", href: null } ]
+  },
+  {
+    name: "{{tm}}",
+    year: "{{2024}}",
+    desc: "{{A one-file CLI for primer melting temperatures, written after computing one by hand one too many times.}}",
+    links: [ { label: "code", href: null } ]
+  },
+  {
+    name: "{{pset.sty}}",
+    year: "{{2025}}",
+    desc: "{{The LaTeX preamble I actually use, so a problem set never starts from an empty file.}}",
+    links: [ { label: "code", href: null } ]
+  }
+];
+
+/* =========================  END OF CONTENT  ============================== */
+/* Below here is the machinery. You shouldn't need to change any of it.      */
+
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* {{placeholder}} -> marked span while DRAFT, plain text once you ship */
+const t = s => esc(s).replace(/\{\{([\s\S]+?)\}\}/g,
+  (_, inner) => DRAFT ? '<span class="ph" title="placeholder — replace me">' + inner + "</span>" : inner);
+
+/* a string is a paragraph; an array is a list */
+const prose = v => Array.isArray(v)
+  ? "<ul>" + v.map(li => "<li>" + t(li) + "</li>").join("") + "</ul>"
+  : "<p>" + t(v) + "</p>";
+
+const tags = list => !list || !list.length ? "" :
+  '<ul class="tags">' + list.map(x =>
+    '<li class="tag">' + t(x.role) + ' <span class="yr">' + t(x.years) + "</span></li>").join("") + "</ul>";
+
+const link = l => l.href
+  ? '<a class="link" href="' + esc(l.href) + '"' + (/^https?:/.test(l.href) ? ' rel="me noopener"' : "") + ">" + t(l.label) + "</a>"
+  : '<span class="ph" title="no link yet">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>";
+
+/* an institution's mark. decorative — the name is already in the title.
+   for a real logo (svg or img), a per-instance SVG <mask mask-type="alpha">
+   gives the CSS color-overlay a same-shaped alpha mask, so the tint only
+   touches the logo's own pixels. mask-type="alpha" is used (over the newer
+   CSS mask-mode property) because it's the old, reliably-supported way to
+   force alpha rather than luminance masking — luminance would tint a dark
+   logo with light linework inside-out. */
+let markCount = 0;
+const mark = ic => {
+  if (!ic) return "";
+  const isGraphic = !!(ic.svg || ic.img);
+  if (!isGraphic) {
+    return '<span class="mark" title="' + esc(ic.title) + '" aria-hidden="true">' + esc(ic.mark) + "</span>";
+  }
+  const maskSrc = ic.img ? esc(ic.img) :
+    "data:image/svg+xml," + encodeURIComponent(ic.svg).replace(/'/g, "%27").replace(/"/g, "%22");
+  const maskId = "tint-mask-" + (++markCount);
+  return (
+    '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' +
+      '<mask id="' + maskId + '" mask-type="alpha" maskContentUnits="objectBoundingBox">' +
+        '<image href="' + maskSrc + '" x="0" y="0" width="1" height="1" preserveAspectRatio="xMidYMid meet"/>' +
+      "</mask>" +
+    "</svg>" +
+    '<span class="mark mark--svg" style="--tint-mask:url(#' + maskId + ')" title="' + esc(ic.title) + '" aria-hidden="true">' +
+      (ic.svg ? ic.svg : '<img src="' + esc(ic.img) + '" alt="">') +
+    "</span>"
+  );
+};
+
+const block = (rail, body, isHeading) =>
+  '<section class="block"' + (isHeading ? ' aria-labelledby="' + isHeading + '"' : "") + ">" +
+    '<div class="rail' + (rail ? "" : " rail--empty") + '">' + rail + "</div>" +
+    '<div class="body">' + body + "</div>" +
+  "</section>";
+
+/* ---------- home ---------- */
+function home() {
+  const intro = block(
+    '<p class="rail-note">' + t(PROFILE.railNote) + "</p>",
+    '<h1 class="name" tabindex="-1">' + t(PROFILE.name) + "</h1>" +
+    '<p class="lede">' + t(PROFILE.lede[0]) + "</p>" +
+    '<p class="lede-2">' + t(PROFILE.lede[1]) + "</p>"
+  );
+
+  const work = block(
+    '<h2 class="rail-label" id="h-work">selected work</h2>',
+    '<ol class="entries">' + WORK.map(p =>
+      '<li class="entry"><a href="#/work/' + esc(p.slug) + '">' +
+        '<div class="entry-head">' +
+          '<h3 class="entry-title">' + t(p.title) + "</h3>" +
+          mark(p.icon) +
+          '<span class="arrow" aria-hidden="true">\u2192</span>' +
+        "</div>" +
+        tags(p.tags) +
+        '<p class="entry-blurb">' + t(p.blurb) + "</p>" +
+      "</a></li>").join("") + "</ol>",
+    "h-work"
+  );
+
+  const exps = block(
+    '<h2 class="rail-label" id="h-exp">experiments</h2>',
+    '<ul class="experiments">' + EXPERIMENTS.map(e =>
+      '<li class="experiment">' +
+        '<span class="exp-name">' + t(e.name) + "</span>" +
+        (e.links || []).map(l => l.href
+          ? '<a class="exp-link" href="' + esc(l.href) + '" rel="noopener">' + t(l.label) + " \u2197</a>"
+          : '<span class="exp-link ph">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>").join("") +
+        '<span class="exp-year">' + t(e.year) + "</span>" +
+        '<p class="exp-desc">' + t(e.desc) + "</p>" +
+      "</li>").join("") + "</ul>",
+    "h-exp"
+  );
+
+  const contact = block(
+    '<h2 class="rail-label" id="h-else">elsewhere</h2>',
+    '<ul class="elsewhere">' + PROFILE.elsewhere.map(l =>
+      '<li><span class="k">' + t(l.k) + "</span>" + link(l) + "</li>").join("") + "</ul>" +
+    '<p class="colophon">' + t(PROFILE.colophon) + "</p>",
+    "h-else"
+  );
+
+  return { title: PROFILE.name, html: intro + work + exps + contact };
+}
+
+/* ---------- a project ---------- */
+function project(slug) {
+  const i = WORK.findIndex(p => p.slug === slug);
+  if (i < 0) return notFound();
+  const p = WORK[i];
+  const next = WORK[(i + 1) % WORK.length];
+
+  let html = block(
+    '<p class="rail-note"><a class="back" href="#/">\u2190 work</a></p>',
+    '<div class="title-row"><h1 class="proj-title" tabindex="-1">' + t(p.title) + "</h1>" + mark(p.icon) + "</div>" +
+    tags(p.tags) +
+    '<p class="proj-blurb">' + t(p.blurb) + "</p>"
+  );
+
+  const parts = [
+    ["context",       p.context],
+    ["my role",       p.role],
+    ["what i did",    p.did],
+    ["what came of it", p.outcome]
+  ];
+  parts.forEach(([label, val], n) => {
+    if (!val) return;
+    const id = "h-" + n;
+    html += block(
+      '<h2 class="rail-label" id="' + id + '">' + label + "</h2>",
+      '<div class="prose">' + prose(val) + "</div>",
+      id
+    );
+  });
+
+  if (p.links && p.links.length) {
+    html += block(
+      '<h2 class="rail-label" id="h-links">links</h2>',
+      '<ul class="links-list">' + p.links.map(l => "<li>" + link(l) + "</li>").join("") + "</ul>",
+      "h-links"
+    );
+  }
+
+  html += block("", '<nav class="pager" aria-label="Project navigation">' +
+      '<a href="#/">\u2190 all work</a>' +
+      '<a class="nxt" href="#/work/' + esc(next.slug) + '"><span>next</span>' + t(next.title) + " \u2192</a>" +
+    "</nav>");
+
+  return { title: p.title + " — " + PROFILE.name, html };
+}
+
+function notFound() {
+  return {
+    title: "Not found — " + PROFILE.name,
+    html: block(
+      '<p class="rail-note">404</p>',
+      '<h1 class="name" tabindex="-1">Nothing here</h1>' +
+      '<p class="lede-2">That page doesn\'t exist. <a class="link" href="#/">Back to the work</a>.</p>'
+    )
+  };
+}
+
+/* ---------- router ---------- */
+const view = document.getElementById("view");
+const announce = document.getElementById("announce");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+function resolve() {
+  const m = location.hash.match(/^#\/work\/([\w-]+)$/);
+  return m ? project(m[1]) : home();
+}
+
+function paint() {
+  const page = resolve();
+  view.innerHTML = page.html;
+  document.title = page.title;
+  announce.textContent = page.title;
+  window.scrollTo(0, 0);
+  const h1 = view.querySelector("h1");
+  if (h1) h1.focus({ preventScroll: true });
+  indexPin();
+}
+
+/* ---------- the pin ---------- */
+const pin = document.getElementById("pin");
+const PIN_LINE = 88;          /* the y where the pin reads the page */
+let sections = [];
+
+function indexPin() {
+  sections = Array.from(view.querySelectorAll(".block"))
+    .map(el => ({ el: el, label: el.querySelector(".rail-label") }))
+    .filter(s => s.label)
+    .map(s => ({ el: s.el, text: s.label.textContent }));
+  updatePin();
+}
+
+function updatePin() {
+  let here = null;
+  for (const s of sections) {
+    const r = s.el.getBoundingClientRect();
+    if (r.top <= PIN_LINE && r.bottom > PIN_LINE) here = s;
+  }
+  if (here) {
+    if (pin.textContent !== here.text) pin.textContent = here.text;
+    pin.classList.add("on");
+  } else {
+    pin.classList.remove("on");
+  }
+}
+
+let queued = false;
+addEventListener("scroll", () => {
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => { updatePin(); queued = false; });
+}, { passive: true });
+addEventListener("resize", updatePin, { passive: true });
+
+function route(first) {
+  if (first || reduced.matches) { paint(); view.classList.remove("leaving"); return; }
+  view.classList.add("leaving");
+  setTimeout(() => { paint(); view.classList.remove("leaving"); }, 180);
+}
+
+addEventListener("hashchange", () => route(false));
+route(true);
+
+if (DRAFT) {
+  document.getElementById("banner").innerHTML =
+    '<div class="banner"><b>draft.</b> anything with a <span class="ph">dotted underline</span> is placeholder ' +
+    "copy written from your r\u00e9sum\u00e9 — replace or delete it. set <b>DRAFT = false</b> in the source to remove this banner and the marks.</div>";
+}
+</script>
+</body>
+</html>
