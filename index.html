@@ -261,27 +261,23 @@ a:focus-visible,
 .mark--svg {
   border: 0; padding: 0;
   width: 1.3rem; height: 1.3rem;   /* matches the letter marks' new size, just square instead of boxed */
-  position: relative; overflow: hidden; isolation: isolate;   /* contains the tint overlay below */
 }
 .mark svg { width: 100%; height: 100%; fill: currentColor; }
-.mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
-/* generic tint: any uploaded photo or vector is first desaturated to grayscale
-   (so its own colors can't clash), then recolored with the mark's current ink
-   color via a `color` blend — which keeps the image's light-and-dark DETAIL and
-   only swaps its hue into the palette, so a seal still reads as a seal. The
-   overlay is clipped by the graphic's own alpha (--tint-mask, an SVG <mask>
-   generated per-icon by mark()) so the tint can't spill onto the transparent
-   area around the logo. */
-.mark--svg img,
-.mark--svg svg { filter: grayscale(1) contrast(1.05); }
-.mark--svg::after {
-  content: "";
-  position: absolute; inset: 0;
-  background: currentColor;        /* = --ink-faint, or --accent on hover */
-  mix-blend-mode: color;
+/* raster logo (icon.img): recolored to a single flat palette tone. The trick is
+   that the source image is used ONLY as an alpha MASK (--tint-mask, an SVG <mask>
+   generated per-icon by mark()) over a solid fill of the mark's current ink
+   color — --ink-faint by default, --accent on hover. The image itself is never
+   painted, so none of its own colors or its dark outer edge can show: the only
+   thing on screen is the flat fill, cut to the logo's shape, its edge fading
+   cleanly from ink to paper. The logo's detail survives because its negative
+   space (here the tree, maze and caduceus) is transparent and stays unpainted,
+   letting the paper read through. NOTE: this treats a logo as a silhouette; a
+   full-bleed photo with no transparency would flatten to a solid shape — the
+   right trade for the institution marks this slot holds. */
+.mark--img {
+  background: currentColor;
   -webkit-mask-image: var(--tint-mask);
   mask-image: var(--tint-mask);
-  pointer-events: none;
 }
 .entry a:hover .mark,
 .entry a:focus-visible .mark { border-color: var(--accent); color: var(--accent); }
@@ -506,7 +502,7 @@ const WORK = [
   {
     slug: "qiu-lab",
     title: "Qiu Lab, Stanford",
-    icon: { mark: "St", title: "Stanford University", img: "https://github.com/KindaBadCoder/Digital-Portfolio/blob/main/Stanford%20Medicine.png"},
+    icon: { mark: "St", title: "Stanford University", img: "https://raw.githubusercontent.com/KindaBadCoder/Digital-Portfolio/refs/heads/main/Stanford%20Medicine.png"},
     blurb: "Modeling embryonic tissue architecture from 3D spatial transcriptomics.",
     tags: [ { role: "undergraduate researcher", years: "2026 —" } ],
     context: "Spatial transcriptomics measures gene expression in intact tissue rather than in cells that have been dissociated and pooled, so every transcriptome arrives with the coordinates it was read at. That turns an embryo into something you can treat geometrically: expression as a field over tissue, not a table of cells.",
@@ -566,7 +562,7 @@ const WORK = [
   {
     slug: "england-lab",
     title: "England Lab, UCSF",
-    icon: { mark: "Uc", title: "UCSF" },
+    icon: { mark: "Uc", title: "UCSF", svg: "<svg>UCSF.svg</svg>"},
     blurb: "Small-molecule candidates for Parkinson's, and the assays that say whether they do anything.",
     tags: [ { role: "full-time intern", years: "summer 2024" } ],
     context: "The lab screens novel small molecules against {{cellular models of}} Parkinson's disease. The question for any candidate is unglamorous and two-part: does it change what the cell expresses, and does it bind what you think it binds.",
@@ -582,7 +578,7 @@ const WORK = [
   {
     slug: "eureka-therapeutics",
     title: "Eureka Therapeutics",
-    icon: { mark: "Eu", title: "Eureka Therapeutics" },
+    icon: { mark: "Eu", title: "Eureka Therapeutics", img: "https://raw.githubusercontent.com/KindaBadCoder/Digital-Portfolio/refs/heads/main/Eureka.png"},
     blurb: "T-cell therapies for solid tumors. My first real bench.",
     tags: [ { role: "intern", years: "summer 2023" } ],
     context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
@@ -666,32 +662,34 @@ const link = l => l.href
   : '<span class="ph" title="no link yet">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>";
 
 /* an institution's mark. decorative — the name is already in the title.
-   for a real logo (svg or img), a per-instance SVG <mask mask-type="alpha">
-   gives the CSS color-overlay a same-shaped alpha mask, so the tint only
-   touches the logo's own pixels. mask-type="alpha" is used (over the newer
-   CSS mask-mode property) because it's the old, reliably-supported way to
-   force alpha rather than luminance masking — luminance would tint a dark
-   logo with light linework inside-out. */
+   three shapes, in priority order:
+     inline SVG -> rendered directly; it's monochrome and inherits currentColor,
+                   so it's already the right palette tone and stays vector-crisp.
+     raster img -> the image is used ONLY as an alpha mask (a per-instance SVG
+                   <mask mask-type="alpha">) over a solid currentColor fill, so
+                   the logo is recolored to a flat palette tone with no fringe.
+                   mask-type="alpha" (over the newer CSS mask-mode property) is
+                   the old, reliably-supported way to force alpha rather than
+                   luminance masking; luminance would mask a dark logo inside-out.
+     letters    -> a boxed two-letter symbol. */
 let markCount = 0;
 const mark = ic => {
   if (!ic) return "";
-  const isGraphic = !!(ic.svg || ic.img);
-  if (!isGraphic) {
-    return '<span class="mark" title="' + esc(ic.title) + '" aria-hidden="true">' + esc(ic.mark) + "</span>";
+  if (ic.svg) {
+    return '<span class="mark mark--svg" title="' + esc(ic.title) + '" aria-hidden="true">' + ic.svg + "</span>";
   }
-  const maskSrc = ic.img ? esc(ic.img) :
-    "data:image/svg+xml," + encodeURIComponent(ic.svg).replace(/'/g, "%27").replace(/"/g, "%22");
-  const maskId = "tint-mask-" + (++markCount);
-  return (
-    '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' +
-      '<mask id="' + maskId + '" mask-type="alpha" maskContentUnits="objectBoundingBox">' +
-        '<image href="' + maskSrc + '" x="0" y="0" width="1" height="1" preserveAspectRatio="xMidYMid meet"/>' +
-      "</mask>" +
-    "</svg>" +
-    '<span class="mark mark--svg" style="--tint-mask:url(#' + maskId + ')" title="' + esc(ic.title) + '" aria-hidden="true">' +
-      (ic.svg ? ic.svg : '<img src="' + esc(ic.img) + '" alt="">') +
-    "</span>"
-  );
+  if (ic.img) {
+    const maskId = "tint-mask-" + (++markCount);
+    return (
+      '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' +
+        '<mask id="' + maskId + '" mask-type="alpha" maskContentUnits="objectBoundingBox">' +
+          '<image href="' + esc(ic.img) + '" x="0" y="0" width="1" height="1" preserveAspectRatio="xMidYMid meet"/>' +
+        "</mask>" +
+      "</svg>" +
+      '<span class="mark mark--svg mark--img" style="--tint-mask:url(#' + maskId + ')" title="' + esc(ic.title) + '" aria-hidden="true"></span>'
+    );
+  }
+  return '<span class="mark" title="' + esc(ic.title) + '" aria-hidden="true">' + esc(ic.mark) + "</span>";
 };
 
 const block = (rail, body, isHeading) =>
