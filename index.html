@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Eric Zhu</title>
-<meta name="description" content="Eric Zhu — mathematics and biology at Stanford. Selected work, projects, contact.">
+<meta name="description" content="Eric Zhu — mathematics and biology at Stanford. work experience, projects, contact.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:,">
+<link rel="icon" type="image/png" href="icons/favicon2.png">
 
 <style>
 /* ============================================================================
@@ -35,6 +35,10 @@
                          the measure never does. */
   --first-line: 1.55rem;  /* every section's first line box. rail labels use it too,
                              which is what keeps a label optically level with its content. */
+
+  --link-space: 1.2rem;  /* total gap before an inline "↗" link — the space between a
+                            title/name and its link, shared by projects AND
+                            extracurriculars. Change it here to move both at once. */
 
   --step: 180ms;
 }
@@ -163,26 +167,52 @@ a:focus-visible,
    segments take the ink of the accent and an arrow appears out in the rail.
    ========================================================================= */
 .entries { list-style: none; }
-.entry { position: relative; }
+.entry { position: relative; isolation: isolate; }   /* own stacking context, so the layers below stay local to the card */
 .entry + .entry { margin-top: 2.1rem; }
 
-.entry a {
-  display: block;
-  text-decoration: none;
-  padding: .55rem .7rem .75rem;
-  margin: -.55rem -.7rem -.75rem;   /* pad the hit area without shifting the type */
+/* the hover / focus wash is its own layer, sitting BEHIND the card's content
+   (z-index: -1) so it can never paint over the title. Roomier than the type,
+   without shifting it. */
+.entry::before {
+  content: "";
+  position: absolute;
+  inset: -.55rem -.7rem -.75rem;
+  z-index: -1;
   border-radius: 2px;
+  background: transparent;
   transition: background var(--step) ease;
+  pointer-events: none;
 }
-.entry a:hover { background: var(--paper-2); }
-.entry a:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.entry:has(.entry-hit:hover)::before,
+.entry:has(.entry-hit:focus-visible)::before { background: var(--paper-2); }
+
+/* the whole card is one link — a stretched, empty overlay <a> sized to the
+   entry. It's transparent and sits ON TOP (so the whole card is clickable and
+   nothing is hidden); the wash above and the type below show through it. Making
+   it an overlay — rather than wrapping the card's contents — lets a second, real
+   link, an optional homepage link, sit beside the title without nesting anchors. */
+.entry-hit {
+  position: absolute;
+  inset: -.55rem -.7rem -.75rem;
+  z-index: 1;
+  border-radius: 2px;
+}
+.entry-hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+/* the homepage link rides above the overlay so it stays independently clickable.
+   Its lead-in space is driven by --link-space, the same token the extracurricular
+   links use, so both move together. */
+.entry-home { position: relative; z-index: 2; margin-left: calc(var(--link-space) - .5rem); }  /* less the .entry-head flex gap (.5) */
 
 .entry-head {
   display: flex;
-  align-items: center;
+  align-items: baseline;   /* so a homepage link sits on the title's baseline, exactly like the extracurricular links */
   gap: 0 .5rem;
   line-height: var(--first-line);
 }
+/* the boxed mark and the reveal arrow stay optically centered, as before —
+   only the text-baseline items (title, homepage link) share the baseline. */
+.entry-head .mark,
+.entry-head .arrow { align-self: center; }
 .entry-title {
   margin: 0;
   font-size: 1.19rem;
@@ -192,8 +222,8 @@ a:focus-visible,
   color: var(--ink);
   transition: color var(--step) ease;
 }
-.entry a:hover .entry-title,
-.entry a:focus-visible .entry-title { color: var(--accent); }
+.entry-hit:hover ~ .entry-head .entry-title,
+.entry-hit:focus-visible ~ .entry-head .entry-title { color: var(--accent); }
 
 /* the arrow sits at the right edge of the entry, out of the rail's way */
 .arrow {
@@ -206,8 +236,8 @@ a:focus-visible,
   transform: translateX(-.35rem);
   transition: opacity var(--step) ease, transform var(--step) ease;
 }
-.entry a:hover .arrow,
-.entry a:focus-visible .arrow { opacity: 1; transform: translateX(0); }
+.entry-hit:hover ~ .entry-head .arrow,
+.entry-hit:focus-visible ~ .entry-head .arrow { opacity: 1; transform: translateX(0); }
 
 .entry-blurb {
   margin: .35rem 0 0;
@@ -234,8 +264,8 @@ a:focus-visible,
   transition: border-color var(--step) ease, color var(--step) ease;
 }
 .tag .yr { color: var(--ink-faint); margin-left: 1.2rem; }
-.entry a:hover .tag,
-.entry a:focus-visible .tag { border-top-color: var(--accent); color: var(--ink); }
+.entry-hit:hover ~ .tags .tag,
+.entry-hit:focus-visible ~ .tags .tag { border-top-color: var(--accent); color: var(--ink); }
 
 /* ----------------------------------------------------------------------------
    INSTITUTION MARKS — a boxed two-letter symbol, set like an element on the
@@ -279,8 +309,8 @@ a:focus-visible,
   -webkit-mask-image: var(--tint-mask);
   mask-image: var(--tint-mask);
 }
-.entry a:hover .mark,
-.entry a:focus-visible .mark { border-color: var(--accent); color: var(--accent); }
+.entry-hit:hover ~ .entry-head .mark,
+.entry-hit:focus-visible ~ .entry-head .mark { border-color: var(--accent); color: var(--accent); }
 
 /* ============================================================================
    PROJECTS — deliberately lighter. one line, one link, no ceremony.
@@ -294,7 +324,7 @@ a:focus-visible,
 }
 .project:first-child { padding-top: 0; }   /* this is what was pushing the list off the label */
 .project + .project { border-top: 1px solid var(--rule); }
-.exp-name { font-weight: 600; }
+.exp-name { font-weight: 600; margin-right: calc(var(--link-space) - .6rem); }  /* less the .project flex gap (.6) */
 .exp-year { font-family: var(--mono); font-size: .72rem; letter-spacing: .045em; color: var(--ink-faint); margin-left: auto; }
 .exp-desc { flex: 1 1 100%; margin: .1rem 0 0; color: var(--ink-muted); font-size: 1rem; line-height: 1.5; }
 
@@ -460,10 +490,17 @@ h1[tabindex]:focus { outline: none; }
 
    Add some work  -> copy any object in WORK, change the fields, drop it in
                      (newest first). The subpage builds itself.
-   Add a project -> one line in PROJECTS.
+   Add a project -> same object shape, but in PROJECTS — it gets its own
+                     subpage too. WORK is places you worked; PROJECTS is things
+                     you made.
+   Add an extra  -> one line in EXTRACURRICULARS (no subpage).
    Text fields    -> a string is a paragraph; an array of strings is a list.
    Links          -> href: null renders as a greyed "add link" stub, so you
-                     never ship a dead URL by accident.
+                     never ship a dead URL by accident. Add home: true to a
+                     link in WORK or PROJECTS and it also shows next to the
+                     title on the homepage card (like the extracurricular
+                     links), not just the subpage. Use a string instead —
+                     home: "shorter label" — to give it a different label there.
    Placeholder    -> wrap anything Claude made up (or that you haven't verified)
                      in {{double braces}}. It renders with a dotted underline
                      while DRAFT is true.
@@ -487,7 +524,7 @@ const PROFILE = {
   railNote: "stanford ’29",
   lede: [
     "I study mathematics and biology at Stanford. On the side, I'm figuring out what I want to do after.",
-    "Right now I'm in the Qiu Lab, modeling embryonic RNA expression in three dimensions. Apart from biological research, I'm also interested in investment, competition math, music, and a bit of computer science."
+    "Right now I'm in the Qiu Lab, modeling embryonic RNA expression in three dimensions. Apart from biological research, I'm also interested in economics, competition math, music, and a bit of computer science."
   ],
   elsewhere: [
     { k: "email",    label: "ekzhu@stanford.edu",         href: "mailto:ekzhu@stanford.edu" },
@@ -535,7 +572,7 @@ const WORK = [
     slug: "eureka-therapeutics",
     title: "Eureka Therapeutics",
     icon: { mark: "Eu", title: "Eureka Therapeutics", img: "icons/Eureka.png"},
-    blurb: "First time at a real bench, researching T-cell therapies for solid tumors",
+    blurb: "First time at a wet-lab bench, researching T-cell therapies for solid tumors",
     tags: [ { role: "intern", years: "summer 2023" } ],
     context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
     role: "Summer intern, {{on the cell-culture and protein side.}}",
@@ -551,7 +588,7 @@ const WORK = [
     slug: "mathimatika",
     title: "Mathimatika",
     icon: { mark: "Ma", title: "Mathimatika", img: "icons/mathimatika.png"},
-    blurb: "An online math competition. 21 people, 40 original problems, over $4,000 in prizes.",
+    blurb: "An online math competition. 21 writers, 40 original problems, $4,000 in prizes",
     tags: [
       { role: "co-founder, project manager", years: "2021" },
     ],
@@ -565,11 +602,15 @@ const WORK = [
     outcome: "More than 100 people sat it. {{What I'd do differently: we wrote the problems before we decided who the contest was for, and you could see it in the difficulty curve.}}",
     links: [ { label: "contest site", href: null } ]
   },
+];
+
+/* PROJECTS build their own subpages, exactly like WORK — same object shape.
+   These are the things you made, as opposed to the places you worked. */
+const PROJECTS = [
   {
     slug: "conference-alerts",
-    title: "Conference alert system",
+    title: "Medical conference alert system",
     blurb: "A scraper that watches medical conference sites so a lab doesn't have to.",
-    tags: [ { role: "solo build", years: "summer 2025" } ],
     context: "Abstract windows, schedule changes and deadlines for medical conferences live on a few dozen sites that update without warning and never announce it. {{The alternative was checking them by hand, on a rota, forever.}}",
     role: "Wrote it and ran it. Python, Selenium, {{one afternoon of design and a month of small corrections.}}",
     did: [
@@ -582,41 +623,27 @@ const WORK = [
   },
   {
     slug: "photoprotection",
-    title: "Photoprotection",
-    blurb: "A year on how plants survive more light than they can use.",
-    tags: [ { role: "independent study", years: "2024–25" } ],
-    context: "A leaf in full sun absorbs far more energy than photosynthesis can process. What happens to the excess — dissipated as heat, or left to make singlet oxygen and destroy the machinery that captured it — is settled on picosecond timescales by a handful of pigments.",
-    role: "Self-directed, over eight months. {{Met with a faculty advisor every few weeks to argue about what I'd read.}}",
-    did: "I came at it from three directions rather than one: the cell biology (thylakoid organization, the xanthophyll cycle), the chemistry (carotenoids as quenchers), and the physical chemistry (energy transfer, and why quenching has to be fast to matter at all). {{Kept notes throughout and wrote a short synthesis at the end.}}",
-    outcome: "The thing that stuck: photoprotection is one word for a stack of different mechanisms operating at different timescales, and most of the live disagreement in the literature is about which one dominates when. {{It's also where I noticed I like the physical-chemistry layer of biology best.}}",
-    links: [ { label: "write-up", href: null } ]
-  },
-  {
-    slug: "journal-club",
-    title: "Journal club — CRISPR and glioblastoma",
-    blurb: "A year of reading papers closely, then a year of teaching two juniors to.",
-    tags: [
-      { role: "member", years: "2024" },
-      { role: "mentor", years: "2025" }
-    ],
-    context: "A small group that read one paper at a time and properly: an hour on methods, relevance and limitations, not a summary. I presented a paper on therapeutic CRISPR for glioblastoma — a cancer where the delivery problem is at least as hard as the editing problem.",
-    role: "Member through 2024, then mentor in 2025 to two juniors giving their first presentations.",
-    did: [
-      "Presented and defended the CRISPR/glioblastoma paper: delivery, off-target effects, and whether the model system could support the claim being made.",
-      "Argued about {{roughly a dozen}} papers across the year, mostly about controls.",
-      "Took two juniors end to end: choosing a paper they could actually carry, reading it with them, rehearsing the talk."
-    ],
-    outcome: "Mentoring taught me more than presenting did. The hardest thing to hand someone is permission to say out loud that a figure doesn't show what the authors say it shows.",
-    links: []
+    title: "Independent study on photoprotection",
+    blurb: "Spent one semester studying how plants survive excess light conditions",
+    context: "We rarely think about plants getting too much sunlight. But when energy from UV radiation exceeds what photosynthesis can handle, what happens is determined in fractions of a second by a specialized crew of pigments. This process is called \"photoprotection.\"",
+    did: "Over one semester, a two friends and I approached photoprotection from three directions: cell biology (thylakoid organization, xanthophyll cycle), organic chemistry (quenching via conjugation), and physical chemistry. Synthesized our research into a presentation for high school students (ranging from freshmen to seniors).",
+    links: [ { label: "End-of-Year Presentation", href: "files/photoprotection.pdf", home: "slides" } ]
   }
 ];
 
-const PROJECTS = [
+/* EXTRACURRICULARS are the light one-liners — no subpage, just a link or two. */
+const EXTRACURRICULARS = [
+  {
+    name: "Journal club - CRISPR & glioblastoma",
+    year: "2024-2025",
+    desc: "A small group of classmates reading and interrogating scientific papers. Presented a CRISPR/glioblastoma paper in-depth, and guided two mentees from choosing a paper to rehearsing the talk.",
+    links: [ { label: "paper", href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10725516/" } ]
+  },
   {
     name: "Competition math textbook",
     year: "2020",
     desc: "142 pages, 14 chapters, written with eight friends. A 'textbook' passion project",
-    links: [ { label: "pdf", href: null } ]
+    links: [ { label: "pdf", href: "files/Textbook.pdf" } ]
   },
 ];
 
@@ -625,6 +652,10 @@ const PROJECTS = [
 
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* escaped plain text with {{placeholder}} braces stripped — for attributes
+   like aria-label, where marked-up spans can't go. */
+const plain = s => esc(String(s).replace(/\{\{([\s\S]+?)\}\}/g, "$1"));
 
 /* {{placeholder}} -> marked span while DRAFT, plain text once you ship */
 const t = s => esc(s).replace(/\{\{([\s\S]+?)\}\}/g,
@@ -639,9 +670,14 @@ const tags = list => !list || !list.length ? "" :
   '<ul class="tags">' + list.map(x =>
     '<li class="tag">' + t(x.role) + ' <span class="yr">' + t(x.years) + "</span></li>").join("") + "</ul>";
 
-const link = l => l.href
-  ? '<a class="link" href="' + esc(l.href) + '"' + (/^https?:/.test(l.href) ? ' rel="me noopener"' : "") + ">" + t(l.label) + "</a>"
-  : '<span class="ph" title="no link yet">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>";
+const link = l => {
+  if (!l.href) return '<span class="ph" title="no link yet">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>";
+  /* open everything but mailto: in a new tab, like extracurriculars do */
+  const attrs = /^https?:/.test(l.href) ? ' target="_blank" rel="me noopener"'
+              : /^mailto:/.test(l.href) ? ""
+              : ' target="_blank" rel="noopener"';
+  return '<a class="link" href="' + esc(l.href) + '"' + attrs + ">" + t(l.label) + "</a>";
+};
 
 /* an institution's mark. decorative — the name is already in the title.
    three shapes, in priority order:
@@ -689,28 +725,16 @@ function home() {
     '<p class="lede-2">' + t(PROFILE.lede[1]) + "</p>"
   );
 
-  const work = block(
-    '<h2 class="rail-label" id="h-work">selected work</h2>',
-    '<ol class="entries">' + WORK.map(p =>
-      '<li class="entry"><a href="#/work/' + esc(p.slug) + '">' +
-        '<div class="entry-head">' +
-          '<h3 class="entry-title">' + t(p.title) + "</h3>" +
-          mark(p.icon) +
-          '<span class="arrow" aria-hidden="true">\u2192</span>' +
-        "</div>" +
-        tags(p.tags) +
-        '<p class="entry-blurb">' + t(p.blurb) + "</p>" +
-      "</a></li>").join("") + "</ol>",
-    "h-work"
-  );
+  const work     = entrySection(WORK,     "work experience", "h-work", "work");
+  const projects = entrySection(PROJECTS, "projects",      "h-proj", "project");
 
   const exps = block(
-    '<h2 class="rail-label" id="h-exp">projects</h2>',
-    '<ul class="projects">' + PROJECTS.map(e =>
+    '<h2 class="rail-label" id="h-exp">extracurriculars</h2>',
+    '<ul class="projects">' + EXTRACURRICULARS.map(e =>
       '<li class="project">' +
         '<span class="exp-name">' + t(e.name) + "</span>" +
         (e.links || []).map(l => l.href
-          ? '<a class="exp-link" href="' + esc(l.href) + '" rel="noopener">' + t(l.label) + " \u2197</a>"
+          ? '<a class="exp-link" href="' + esc(l.href) + '" target="_blank" rel="noopener">' + t(l.label) + " \u2197</a>"
           : '<span class="exp-link ph">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>").join("") +
         '<span class="exp-year">' + t(e.year) + "</span>" +
         '<p class="exp-desc">' + t(e.desc) + "</p>" +
@@ -726,18 +750,55 @@ function home() {
     "h-else"
   );
 
-  return { title: PROFILE.name, html: intro + work + exps + contact };
+  return { title: PROFILE.name, html: intro + work + projects + exps + contact };
 }
 
-/* ---------- a project ---------- */
-function project(slug) {
-  const i = WORK.findIndex(p => p.slug === slug);
+/* an entry section \u2014 the rich, subpage-linked list. WORK and PROJECTS both use
+   it; only the label, heading id and route prefix differ. */
+function entrySection(list, label, id, route) {
+  return block(
+    '<h2 class="rail-label" id="' + id + '">' + label + "</h2>",
+    '<ol class="entries">' + list.map(p =>
+      '<li class="entry">' +
+        /* the stretched overlay link \u2014 covers the whole card, navigates to
+           the subpage. Empty, so its accessible name is the aria-label. */
+        '<a class="entry-hit" href="#/' + route + '/' + esc(p.slug) + '" aria-label="' + plain(p.title) + '"></a>' +
+        '<div class="entry-head">' +
+          '<h3 class="entry-title">' + t(p.title) + "</h3>" +
+          mark(p.icon) +
+          homeLinks(p.links) +
+          '<span class="arrow" aria-hidden="true">\u2192</span>' +
+        "</div>" +
+        tags(p.tags) +
+        '<p class="entry-blurb">' + t(p.blurb) + "</p>" +
+      "</li>").join("") + "</ol>",
+    id
+  );
+}
+
+/* links marked with `home` appear on the homepage card too, beside the title,
+   styled like the extracurricular links. `home: true` reuses the link's label;
+   `home: "short text"` uses that string as the homepage label instead. They
+   ride on top of the card's overlay link, so they open independently — in a
+   new tab, like the extracurricular links. */
+const homeLinks = list => (list || [])
+  .filter(l => l.home && l.href)
+  .map(l =>
+    '<a class="exp-link entry-home" href="' + esc(l.href) + '"' +
+    (/^mailto:/.test(l.href) ? "" : ' target="_blank" rel="noopener"') +
+    ">" + t(typeof l.home === "string" ? l.home : l.label) + " ↗</a>")
+  .join("");
+
+/* ---------- a project / work detail page ---------- */
+function detail(sec, slug) {
+  const list = sec.list;
+  const i = list.findIndex(p => p.slug === slug);
   if (i < 0) return notFound();
-  const p = WORK[i];
-  const next = WORK[(i + 1) % WORK.length];
+  const p = list[i];
+  const next = list[(i + 1) % list.length];
 
   let html = block(
-    '<p class="rail-note"><a class="back" href="#/">\u2190 work</a></p>',
+    '<p class="rail-note"><a class="back" href="#/">\u2190 ' + sec.back + "</a></p>",
     '<div class="title-row"><h1 class="proj-title" tabindex="-1">' + t(p.title) + "</h1>" + mark(p.icon) + "</div>" +
     tags(p.tags) +
     '<p class="proj-blurb">' + t(p.blurb) + "</p>"
@@ -768,8 +829,8 @@ function project(slug) {
   }
 
   html += block("", '<nav class="pager" aria-label="Project navigation">' +
-      '<a href="#/">\u2190 all work</a>' +
-      '<a class="nxt" href="#/work/' + esc(next.slug) + '"><span>next</span>' + t(next.title) + " \u2192</a>" +
+      '<a href="#/">\u2190 all ' + sec.back + "</a>" +
+      '<a class="nxt" href="#/' + sec.route + "/" + esc(next.slug) + '"><span>next</span>' + t(next.title) + " \u2192</a>" +
     "</nav>");
 
   return { title: p.title + " — " + PROFILE.name, html };
@@ -791,9 +852,16 @@ const view = document.getElementById("view");
 const announce = document.getElementById("announce");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
+/* each entry section maps to a route prefix, its list, and the words the detail
+   page uses for its back-link and pager ("← work" / "← projects"). */
+const SECTIONS = {
+  work:    { list: WORK,     back: "work",     route: "work" },
+  project: { list: PROJECTS, back: "projects", route: "project" }
+};
+
 function resolve() {
-  const m = location.hash.match(/^#\/work\/([\w-]+)$/);
-  return m ? project(m[1]) : home();
+  const m = location.hash.match(/^#\/(work|project)\/([\w-]+)$/);
+  return m && SECTIONS[m[1]] ? detail(SECTIONS[m[1]], m[2]) : home();
 }
 
 function paint() {
