@@ -25,6 +25,12 @@
   --accent:     #17458c;   /* Coomassie */
   --accent-dim: #17458c33;
 
+  /* syntax tokens — keywords reuse --accent; the rest are muted so the
+     block reads coloured, not neon. */
+  --tok-str:    #2e7d4f;   /* strings — green */
+  --tok-num:    #9a5b00;   /* numbers — amber */
+  --tok-fn:     #7a3ba8;   /* function / builtin names — violet */
+
   --serif: "Charter", "Bitstream Charter", "Iowan Old Style", "Sitka Text", Cambria, Georgia, serif;
   --mono:  ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
@@ -35,6 +41,9 @@
                          the measure never does. */
   --first-line: 1.55rem;  /* every section's first line box. rail labels use it too,
                              which is what keeps a label optically level with its content. */
+  --prose-line: calc(1.125rem * 1.62);  /* a detail-page prose paragraph's first line box
+                             (body font-size × line-height). Its rail label matches it so the
+                             header centers on the taller reading line, not the --first-line one. */
 
   --link-space: 1.2rem;  /* total gap before an inline "↗" link — the space between a
                             title/name and its link, shared by projects AND
@@ -52,6 +61,9 @@
     --rule:       #2a3034;
     --accent:     #8fb4e8;
     --accent-dim: #8fb4e844;
+    --tok-str:    #8ec6a4;
+    --tok-num:    #d6a76a;
+    --tok-fn:     #c8a6e6;
   }
 }
 
@@ -161,6 +173,115 @@ a:focus-visible,
 .lede-2 { color: var(--ink-muted); font-size: 1.0rem; line-height: 1.6; }
 
 /* ============================================================================
+   FILTER — a subject switch that sits below the intro, above the work. Pick a
+   subject and every entry whose `subjects` don't include it collapses away
+   (animated height + fade, see setCollapsed()); the rest reflow up. A section
+   that ends up empty collapses whole. "everything" resets. The control is a
+   custom listbox, not a native <select>, so it can wear the page's mono voice.
+   Subjects live on each WORK / PROJECT / EXTRACURRICULAR object as a
+   `subjects: ["biology", ...]` array — edit them in the CONTENT block.
+   ========================================================================= */
+/* the control sits inline under the intro paragraph — a little air above it,
+   a faint lead-in word, the dropdown, then the live count. Wraps on narrow
+   screens. No section header, no rail label. */
+.filter-row {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: .6rem .85rem;
+  margin-top: 1.9rem;
+}
+.filter-lead {
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: lowercase;
+  color: var(--ink-faint);
+}
+.filter { position: relative; display: inline-block; }
+.filter-btn {
+  display: inline-flex; align-items: center; gap: .55rem;
+  margin: 0;
+  padding: .42rem .3rem .42rem .75rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-transform: lowercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--step) ease, color var(--step) ease;
+}
+.filter-btn:hover { border-color: var(--accent); }
+.filter-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filter-label { line-height: 1; color: var(--accent); }
+.filter-label.is-active { color: var(--accent); }
+.filter-caret {
+  display: inline-block;
+  padding: 0 .35rem;
+  font-size: .62rem;
+  color: var(--ink-faint);
+  transition: transform var(--step) ease, color var(--step) ease;
+}
+.filter[data-open="true"] .filter-caret { transform: rotate(180deg); color: var(--accent); }
+
+.filter-menu {
+  position: absolute;
+  top: calc(100% + .4rem); left: 0;
+  z-index: 6;
+  min-width: 100%;
+  margin: 0;
+  padding: .3rem;
+  list-style: none;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: 0 8px 30px -14px rgba(0,0,0,.45);
+  opacity: 0;
+  transform: translateY(-.35rem);
+  pointer-events: none;
+  transition: opacity var(--step) ease, transform var(--step) ease;
+}
+.filter[data-open="true"] .filter-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.filter-opt {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .42rem .6rem;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-transform: lowercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--step) ease, color var(--step) ease;
+}
+.filter-opt:hover { background: var(--paper-2); color: var(--ink); }
+.filter-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.filter-opt[aria-selected="true"] { color: var(--accent); }
+.filter-dot {
+  flex: none;
+  width: .42rem; height: .42rem;
+  border-radius: 1px;
+  background: var(--rule);
+  transition: background var(--step) ease;
+}
+.filter-opt:hover .filter-dot { background: var(--ink-faint); }
+.filter-opt[aria-selected="true"] .filter-dot { background: var(--accent); }
+.filter-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .03em;
+  color: var(--ink-faint);
+}
+
+/* a hidden entry's height is animated to 0, then it's set display:none in JS.
+   this rule keeps a collapsed extracurricular from leaving its separator line
+   above whatever follows it mid-transition. */
+.project.is-collapsed + .project { border-top-color: transparent; }
+
+/* ============================================================================
    WORK ENTRIES
    Tags are segmented top-rules, not pills — read them as a strip of tabs:
    one stint per segment, so a history is visible at a glance. On hover the
@@ -168,7 +289,12 @@ a:focus-visible,
    ========================================================================= */
 .entries { list-style: none; }
 .entry { position: relative; isolation: isolate; }   /* own stacking context, so the layers below stay local to the card */
-.entry + .entry { margin-top: 2.1rem; }
+/* spacing lives on the bottom (not the top) so that when the FIRST entry of a
+   section is filtered away, the next one rises flush to its rail label rather
+   than carrying a leading gap. setCollapsed() animates this to 0 as an entry
+   folds shut, so neighbours slide up without a jump. */
+.entry { margin-bottom: 2.1rem; }
+.entry:last-child { margin-bottom: 0; }
 
 /* the hover / focus wash is its own layer, sitting BEHIND the card's content
    (z-index: -1) so it can never paint over the title. Roomier than the type,
@@ -370,7 +496,7 @@ a:focus-visible,
 }
 .proj-blurb { margin: .8rem 0 0; color: var(--ink-muted); font-size: 1.06rem; }
 .proj-title + .tags { margin-top: 1.2rem; }
-.back { text-decoration: none; color: var(--ink-faint); transition: color var(--step) ease; }
+.back { text-decoration: none; color: var(--ink-muted); transition: color var(--step) ease; }
 .back:hover { color: var(--accent); }
 .prose ul { list-style: none; }
 .prose li { position: relative; padding-left: 1.1rem; margin-bottom: .6rem; }
@@ -380,7 +506,12 @@ a:focus-visible,
   color: var(--ink-faint);
 }
 .prose li:last-child { margin-bottom: 0; }
-.links-list { list-style: none; display: grid; gap: .45rem; font-size: 1rem; }
+/* prose reads at a taller line-height than a rail label, so instead of shrinking
+   its first line (which browsers apply unreliably via ::first-line), we grow the
+   label's line box to match — both boxes are then equal and top-aligned, so the
+   header centers on the first line of text exactly like the homepage sections. */
+.rail-label--prose { line-height: var(--prose-line); }
+.links-list { list-style: none; display: grid; gap: .45rem; font-size: 1rem; line-height: var(--first-line); }
 
 .pager {
   display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between;
@@ -390,8 +521,10 @@ a:focus-visible,
 }
 .pager a { text-decoration: none; color: var(--ink-muted); transition: color var(--step) ease; }
 .pager a:hover { color: var(--accent); }
-.pager .nxt { text-align: right; }
-.pager .nxt span { display: block; color: var(--ink-faint); font-size: .72rem; margin-bottom: .15rem; }
+.pager .nxt { display: inline-flex; align-items: flex-start; gap: .4rem; }
+.pager .nxt .nxt-col { display: flex; flex-direction: column; text-align: right; }
+.pager .nxt .nxt-lead { margin-bottom: .15rem; }
+.pager .nxt .nxt-title { color: var(--ink-faint); font-size: .72rem; }
 
 /* ============================================================================
    THE PIN — sticks to the top while you scroll and names the section you're in.
@@ -446,19 +579,58 @@ a:focus-visible,
 }
 
 /* ============================================================================
-   DRAFT MARKS — dotted underline = copy Claude invented. Set DRAFT = false
-   in the script below and both the marks and the banner disappear.
+   CODE / PSEUDOCODE — a shaded monospace slab. Built from the same paper-2
+   wash as the hover states and the rule colour for its edge, so it reads as
+   part of the page rather than a pasted-in embed. Long lines scroll inside
+   the block; the measure never widens. An optional caption names the file,
+   language, or "pseudocode". Deliberately un-highlighted — one ink colour,
+   the way a lab notebook would have it. Lightly syntax-highlighted: keywords
+   in the accent blue, strings green, numbers amber, function names violet —
+   see renderCode() for the tokeniser that adds these classes.
+   ========================================================================= */
+.code {
+  margin: 1.3rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper-2);
+  overflow: hidden;   /* clips the caption's corners to the rounded frame */
+}
+.code figcaption {
+  padding: .5rem .9rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .05em;
+  text-transform: lowercase;
+  color: var(--ink-faint);
+}
+.code pre {
+  margin: 0;
+  padding: .95rem 1.1rem;
+  overflow-x: auto;   /* long lines scroll here, not on the page body */
+  font-family: var(--mono);
+  font-size: .82rem;
+  line-height: 1.6;
+  color: var(--ink);
+  tab-size: 2;
+}
+.code code { font: inherit; color: inherit; white-space: pre; }
+/* comments (whole-line, trailing, or a {{! …}} marker) render dimmed. */
+.code .c { color: var(--ink-faint); }
+/* syntax tokens — added by renderCode(). */
+.code .tok-kw  { color: var(--accent); }
+.code .tok-str { color: var(--tok-str); }
+.code .tok-num { color: var(--tok-num); }
+.code .tok-fn  { color: var(--tok-fn); }
+/* states for a block whose source is pulled from an external file */
+.code .code-loading { color: var(--ink-faint); }
+.code .code-err     { color: var(--ink-faint); white-space: pre-wrap; }
+
+/* ============================================================================
+   LINK STUBS — a link with href: null renders as a dotted, greyed stub, so a
+   dead URL never ships by accident.
    ========================================================================= */
 .ph { text-decoration: underline dotted var(--accent-dim); text-underline-offset: .22em; text-decoration-thickness: 1px; }
-.banner {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper-2);
-  padding: .75rem 1.5rem;
-  font-family: var(--mono); font-size: .74rem; line-height: 1.6; letter-spacing: .02em;
-  color: var(--ink-muted);
-}
-.banner b { color: var(--ink); font-weight: 600; }
-.banner .ph { text-decoration-color: var(--accent); }
 
 /* ============================================================================
    TRANSITIONS — a fade and 4px of travel between home and a project. Nothing else.
@@ -476,7 +648,6 @@ h1[tabindex]:focus { outline: none; }
 
 <body>
 <a class="skip" href="#view">Skip to content</a>
-<div id="banner"></div>
 <div class="pin-layer" aria-hidden="true"><div class="pin-inner"><span class="pin" id="pin"></span></div></div>
 <main class="wrap" id="view" tabindex="-1"></main>
 <p class="sr-only" role="status" aria-live="polite" id="announce"></p>
@@ -494,20 +665,24 @@ h1[tabindex]:focus { outline: none; }
                      subpage too. WORK is places you worked; PROJECTS is things
                      you made.
    Add an extra  -> one line in EXTRACURRICULARS (no subpage).
-   Text fields    -> a string is a paragraph; an array of strings is a list.
+   Text fields    -> a string is a paragraph; an array of strings is a list. To
+                     mix the two, use an array whose items are strings (each a
+                     paragraph) and nested arrays (each a bullet list), in order:
+                     [ "a lead-in line, then:", [ "first point", "second point" ] ].
    Links          -> href: null renders as a greyed "add link" stub, so you
                      never ship a dead URL by accident. Add home: true to a
                      link in WORK or PROJECTS and it also shows next to the
                      title on the homepage card (like the extracurricular
                      links), not just the subpage. Use a string instead —
                      home: "shorter label" — to give it a different label there.
-   Placeholder    -> wrap anything Claude made up (or that you haven't verified)
-                     in {{double braces}}. It renders with a dotted underline
-                     while DRAFT is true.
-   Ship it        -> set DRAFT = false. Banner and dotted marks vanish.
-   Institution    -> icon: { mark: "St", title: "Stanford University" } draws a
-                     boxed two-letter symbol next to the title. To use a real
-                     logo instead, either paste an SVG:
+   Subjects       -> give any WORK / PROJECT / EXTRACURRICULAR a
+                     subjects: ["biology", "cs"] array, using keys from SUBJECTS
+                     below. The "filter" control under the intro then hides the
+                     entries that don't match the chosen subject. Leave it off
+                     and the entry only shows under "everything". Add or rename a
+                     subject in one place: the SUBJECTS list.
+   Institution    -> icon: { … } draws a logo next to the title. Either paste
+                     an SVG:
                        icon: { title: "Stanford University", svg: "<svg …>…</svg>" }
                      (keep it monochrome and it will inherit the ink; a 1em
                      square viewBox works best) — or point at an image URL:
@@ -515,7 +690,19 @@ h1[tabindex]:focus { outline: none; }
                      Only formal institutions get one.
    =========================================================================== */
 
-const DRAFT = true;
+/* the subjects the filter offers, in order. `key` is what you put in an entry's
+   `subjects` array; `label` is what the dropdown shows. Add, remove, or rename
+   here and everything else follows. "everything" (the reset) is added for you. */
+const SUBJECTS = [
+  { key: "math",      label: "math" },
+  { key: "biology",   label: "biology" },
+  { key: "economics", label: "economics" },
+  { key: "cs",        label: "computer science" },
+];
+
+/* which subject is currently selected ("" = everything). Persists across
+   home <-> project navigation within a visit. */
+let activeSubject = "";
 
 /* ===========================  CONTENT  =================================== */
 
@@ -527,80 +714,100 @@ const PROFILE = {
     "Right now I'm in the Qiu Lab, modeling embryonic RNA expression in three dimensions. Apart from biological research, I'm also interested in economics, competition math, music, and a bit of computer science."
   ],
   elsewhere: [
-    { k: "email",    label: "ekzhu@stanford.edu",         href: "mailto:ekzhu@stanford.edu" },
+    { k: "email",    label: "ekzhu.2007@gmail.com",         href: "mailto:ekzhu.2007@gmail.com" },
     { k: "linkedin", label: "linkedin.com/in/eric-k-zhu", href: "https://www.linkedin.com/in/eric-k-zhu/" },
-    { k: "github",   label: "{{github.com/your-username}}", href: null },
-    { k: "cv",       label: "{{résumé (pdf)}}",             href: null }
   ],
   colophon: "by Eric Zhu  |  © 2026"
 };
 
 const WORK = [
   {
+    slug: "monarch",
+    title: "Monarch Investment Management",
+    icon: { img: "icons/Monarch.png" },
+    blurb: "Biotech and pharma investment",
+    subjects: [ "economics", "biology", "cs"],
+    tags: [ { role: "analyst", years: "summer 2026" } ],
+    context: "",
+    role: "",
+    did: "text",
+    outcome: "text",
+    links: [ { label: "link text", href: null } ]
+  },
+  {
+    slug: "berkeley-economics",
+    title: "UC Berkeley Economics",
+    icon: { img: "icons/Berkeley.png" },
+    blurb: "Using NLPs to analyze the effect of private equity on California care facilities",
+    subjects: [ "economics", "cs" ],
+    tags: [ { role: "research assistant", years: "2026—" } ],
+    context: "",
+    role: "",
+    did: [
+      "Coded an NLP program in Python to parse through hundreds of thousands of care facility reports and classify detected offenses by severity.",
+      { codeFile: "files/nlp.py", lang: "python pseudocode" }
+    ],
+  },
+  {
     slug: "qiu-lab",
     title: "Qiu Lab, Stanford",
-    icon: { mark: "St", title: "Stanford University", img: "icons/Stanford Medicine.png"},
+    icon: { title: "Stanford University", img: "icons/Stanford Medicine.png"},
     blurb: "Using 3D spatial transcriptomics to model RNA expression across time and space",
+    subjects: [ "biology", "cs" ],
     tags: [ { role: "researcher", years: "2026—" } ],
-    context: "Spatial transcriptomics measures gene expression in intact tissue rather than in cells that have been dissociated and pooled, so every transcriptome arrives with the coordinates it was read at. That turns an embryo into something you can treat geometrically: expression as a field over tissue, not a table of cells.",
-    role: "Undergraduate researcher since February 2026. {{Roughly ten hours a week, mostly on the computational side, with enough bench time to know where the data comes from and how it can lie.}}",
-    did: [
-      "{{Work on the pipeline that turns raw spatial reads into per-cell expression matrices with usable coordinates — filtering, normalization, and the unglamorous parts of quality control.}}",
-      "{{Prototype in silico reconstructions of tissue architecture: registering sections into a common 3D frame, then checking that known markers land where developmental biology says they should.}}",
-      "{{Read enough of the developmental literature to recognize a plausible answer before trusting a plot.}}"
-    ],
-    outcome: "{{In progress — this is the thing I'm most curious about right now.}} The surprise so far is that the hard part isn't the model. It's deciding what counts as the same cell across two sections, which is a question nobody can answer for you.",
-    links: [ { label: "lab site", href: null } ]
+    context: "Standard spatial transcriptomics measures gene expression in intact tissue rather than in dissociated and pooled cells. While this is useful, it relies on flat two-dimensional slices. 3D spatial transcriptomics attempts to reconstruct whole-tissue volumes across three axes. The Qiu Lab is building a dynamic 3D model of the embryo that maps RNA expression across both time and space (spatialtemporal data).",
+    role: "I work primarily as a wet lab researcher, helping cryosection mice embryos and preparing the slides prior to being sent out for RNA sequencing. After we receive the data, we run it through computational pipelines that generate our 3D spatial mapping.",
+    outcome: "In progress — this is something I'm curious about right now!",
+    links: [ { label: "Lab Website", href: "https://www.devo-evo.com/" } ]
   },
   {
     slug: "england-lab",
     title: "England Lab, UCSF",
-    icon: { mark: "Uc", title: "UCSF", img: "icons/UCSF.png"},
+    icon: { title: "UCSF", img: "icons/UCSF.png"},
     blurb: "Screening novel small-molecule drug candidates for Parkinson's Disease",
+    subjects: [ "biology" ],
     tags: [ { role: "research intern", years: "summer 2024" } ],
-    context: "The lab screens novel small molecules against {{cellular models of}} Parkinson's disease. The question for any candidate is unglamorous and two-part: does it change what the cell expresses, and does it bind what you think it binds.",
-    role: "Full-time intern for the summer. Ran assays, and presented findings at weekly lab meetings.",
+    context: "Parkinson's Disease is commonly associated with diminished dopamine production and high levels of neuroinflammation. Consequently, drugs that upregulate dopaminergic pathways while reducing inflammation are incredibly promising. Nuclear receptors such as Nurr1 are known to regulate genes in these pathways, which makes them a compelling target for developing new small molecule therapies.",
     did: [
-      "qPCR end to end — cell culture, RNA extraction, cDNA synthesis — to characterize expression changes under compound treatment.",
-      "SDS-PAGE and western blots to characterize protein bands of interest.",
-      "Affinity purification with biotin and biotinylated compounds, to pull down and locate intracellular drug binding sites."
+      "At the England Lab, I screened multiple small-molecule compounds designed to target Nurr1 and induce different gene expression changes, while presenting my findings to the lab each week. In particular, I",
+      [
+        "Performed qPCR end to end — cell culture, drug treatment, RNA extraction, cDNA synthesis — to characterize gene expression changes in specific dopaminergic and inflammatory pathways.",
+        "SDS-PAGE and western blots to characterize protein bands of interest.",
+        "Used affinity purification with biotin and biotinylated small molecule drugs to pull down and confirm intracellular drug binding sites."
+      ]
     ],
-    outcome: "{{The results fed into how the group triaged candidates.}} The real lesson was in the negatives: most of a screen is learning to tell 'no effect' apart from 'the assay didn't work,' which is a question about controls, not chemistry.",
-    links: []
+    links: [ { label: "Research Abstract", href: "files/englandlab.pdf"} ]
   },
   {
     slug: "eureka-therapeutics",
     title: "Eureka Therapeutics",
-    icon: { mark: "Eu", title: "Eureka Therapeutics", img: "icons/Eureka.png"},
+    icon: { title: "Eureka Therapeutics", img: "icons/Eureka.png"},
     blurb: "First time at a wet-lab bench, researching T-cell therapies for solid tumors",
+    subjects: [ "biology" ],
     tags: [ { role: "intern", years: "summer 2023" } ],
-    context: "Eureka builds engineered T-cell therapies. {{Solid tumors are the hard case: the cells have to reach the tumor and then keep working once they're inside it, which is not where T-cell therapy has historically been strong.}}",
-    role: "Summer intern, {{on the cell-culture and protein side.}}",
+    context: "T-cell therapies such as CAR-T have transformed the treatment of blood cancers, but treating T-cell therapies such as CAR-T have transformed the treatment of blood cancers, but solid tumors remain a challenge due to transport.",
     did: [
-      "Cultured HEPG2 cells as the model line for the work.",
-      "Ran SDS-PAGE and western blots to identify proteins in culture solutions.",
-      "Sat close enough to flow cytometry, bio-layer interferometry and HPLC to know what each is for {{— and not close enough to claim I can run them.}}"
+      "Eureka Therapeutics is where I first gained experience in wet lab research. That summer, I",
+      [
+        "mainained their line of HEPG2 cells",
+        "ran SDS-PAGE and western blot experiments to identify antibodies in cell culture solutions",
+        "learned flow cytometry, bio-layer interferometry and HPLC."
+      ]
     ],
-    outcome: "First time in a real lab, at sixteen. What I took away is how much of biology is technique: a protocol is a hypothesis, and it has consequences if you do the steps in the wrong order.",
+    outcome: "My first gel was pretty bad, and my last ones weren't perfect either. But that summer highlighted the importance of precision in biological research, which I would take with me into the coming years.",
     links: []
   },
  {
     slug: "mathimatika",
     title: "Mathimatika",
-    icon: { mark: "Ma", title: "Mathimatika", img: "icons/mathimatika.png"},
+    icon: { title: "Mathimatika", img: "icons/mathimatika.png"},
     blurb: "An online math competition. 21 writers, 40 original problems, $4,000 in prizes",
+    subjects: [ "math" ],
     tags: [
       { role: "co-founder, project manager", years: "2021" },
     ],
-    context: "In 2021 there was nowhere online to take a contest that felt like the real thing. {{So a few of us wrote one}} — original problems, open to anyone, with prizes large enough that people took it seriously.",
-    role: "Co-founder and project manager. I ran the team of 21 and owned test day.",
-    did: [
-      "Coordinated the writing, test-solving and revision of 40 original competition problems.",
-      "Ran test-day logistics: the contest portal, submission data, scoring.",
-      "Handled the prize pool — over $4,000 — and everything around getting 100+ participants to the start line."
-    ],
-    outcome: "More than 100 people sat it. {{What I'd do differently: we wrote the problems before we decided who the contest was for, and you could see it in the difficulty curve.}}",
-    links: [ { label: "contest site", href: null } ]
+    did: "During the uncertainty of the pandemic, I partnered with a couple of friends to host an online mathematics competition. As co-founder and project manager, I led a 21-person team to write an online mock AMC 10/12 for over 100 participants. We built the non-profit from the ground up: curating original problems, rigorous test-solving, and securing $4,000 in sponsorships from industry leaders including Maplesoft, Jane Street, and Wolfram. On test day, I oversaw all testing logistics and analyzed submission data for accurate score calculations.",
+    links: [ { label: "The Mathimatika² Contest", href: "files/mathimatika.pdf"} ]
   },
 ];
 
@@ -610,21 +817,62 @@ const PROJECTS = [
   {
     slug: "conference-alerts",
     title: "Medical conference alert system",
-    blurb: "A scraper that watches medical conference sites so a lab doesn't have to.",
-    context: "Abstract windows, schedule changes and deadlines for medical conferences live on a few dozen sites that update without warning and never announce it. {{The alternative was checking them by hand, on a rota, forever.}}",
-    role: "Wrote it and ran it. Python, Selenium, {{one afternoon of design and a month of small corrections.}}",
+    blurb: "A scraper that monitors medical conference sites so investors don't have to.",
+    subjects: [ "cs", "economics" ],
+    context: "Medical conferences are crucial for healthcare investors, but tracking the details is a tedious task. Abstract releases, keynote schedules, and deadlines are scattered across dozens of company websites that update without warning. Analysts may check multiple times a day, only to miss an important update.",
     did: [
-      "Drove each site with Selenium where the content was rendered client-side, and fell back to plain requests where it wasn't.",
-      "{{Diffed every fetch against the previous snapshot, so it alerts on the four fields that matter — dates, schedule, abstracts, announcements — and stays quiet about the rest.}}",
-      "{{Kept sites and selectors in a config file, so adding a conference is one entry rather than one script.}}"
-    ],
-    outcome: "{{It replaced a recurring manual check for the group.}} What it actually taught me is about brittleness: selectors rot, and the right design is the one that fails loudly instead of quietly returning nothing and looking like good news.",
-    links: [ { label: "code", href: null } ]
+      "I drove each site with Selenium where the content was rendered client-side and fell back to plain requests where it wasn't, simulating a real visitor with small mouse moves and scrolls to coax out anything lazy-loaded. I normalized each page before comparisons, masking volatile details like dates and counts so a shifting countdown didn't look like real news, then diffed it against the previous snapshot to surface only genuine changes. Every target site lives in one config block, so adding a conference is a new line rather than a new script.",
+      { code: `from selenium import webdriver
+from bs4 import BeautifulSoup
+import difflib, re
+
+# one entry per conference — adding a site is a new line here, not a new script
+TARGETS = {
+    "ESMO": "https://www.esmo.org/meeting-calendar/esmo-congress-2025",
+    "UEG":  "https://programme.ueg.eu/2025",
+    "FDA":  "https://www.fda.gov/news-events/fda-newsroom",
+}
+
+def fetch_and_clean(driver, url):
+    driver.get(url)
+    simulate_human(driver)        # mouse moves + scroll to trigger lazy loading
+    wait_for_body(driver)
+
+    text = BeautifulSoup(driver.page_source, "html.parser").get_text(" ")
+
+    # mask volatile data so a new date or count doesn't look like a real change
+    for month in MONTHS:
+        text = text.replace(month, "MONTH")
+    return re.sub(r"\\d", "#", text)
+
+def compare_and_save(name, current):
+    previous = load(f"snapshots/{name}.txt")
+
+    if previous is None:
+        print("No previous snapshot found. Saving baseline.")
+    elif current != previous:
+        print("Update detected!")
+        diff = difflib.unified_diff(previous.splitlines(), current.splitlines())
+        save(f"diffs/{name}.txt", "\\n".join(diff))
+    else:
+        print("No changes detected.")
+
+    save(f"snapshots/{name}.txt", current)   # overwrite the old snapshot
+
+driver = webdriver.Chrome(options=stealth_options())
+
+for name, url in TARGETS.items():
+    print(f"Checking {name}...")
+    compare_and_save(name, fetch_and_clean(driver, url))
+
+driver.quit()`, lang: "python pseudocode" }
+    ]
   },
   {
     slug: "photoprotection",
     title: "Independent study on photoprotection",
     blurb: "Spent one semester studying how plants survive excess light conditions",
+    subjects: [ "biology" ],
     context: "We rarely think about plants getting too much sunlight. But when energy from UV radiation exceeds what photosynthesis can handle, what happens is determined in fractions of a second by a specialized crew of pigments. This process is called \"photoprotection.\"",
     did: "Over one semester, a two friends and I approached photoprotection from three directions: cell biology (thylakoid organization, xanthophyll cycle), organic chemistry (quenching via conjugation), and physical chemistry. Synthesized our research into a presentation for high school students (ranging from freshmen to seniors).",
     links: [ { label: "End-of-Year Presentation", href: "files/photoprotection.pdf", home: "slides" } ]
@@ -634,14 +882,23 @@ const PROJECTS = [
 /* EXTRACURRICULARS are the light one-liners — no subpage, just a link or two. */
 const EXTRACURRICULARS = [
   {
+    name: "Stanford Math Tournament",
+    year: "2025-",
+    subjects: [ "math" ],
+    desc: "A student-run organization that hosts some of the biggest middle and high school math competitions in the country. Contributed as a member in 2025-2026, and as a Tournament Development lead in 2026-2027.",
+    links: [ { label: "website", href: "https://www.stanfordmathtournament.org/" } ]
+  },
+  {
     name: "Journal club - CRISPR & glioblastoma",
     year: "2024-2025",
+    subjects: [ "biology" ],
     desc: "A small group of classmates reading and interrogating scientific papers. Presented a CRISPR/glioblastoma paper in-depth, and guided two mentees from choosing a paper to rehearsing the talk.",
     links: [ { label: "paper", href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10725516/" } ]
   },
   {
     name: "Competition math textbook",
     year: "2020",
+    subjects: [ "math" ],
     desc: "142 pages, 14 chapters, written with eight friends. A 'textbook' passion project",
     links: [ { label: "pdf", href: "files/Textbook.pdf" } ]
   },
@@ -653,25 +910,116 @@ const EXTRACURRICULARS = [
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* escaped plain text with {{placeholder}} braces stripped — for attributes
-   like aria-label, where marked-up spans can't go. */
-const plain = s => esc(String(s).replace(/\{\{([\s\S]+?)\}\}/g, "$1"));
+/* plain escaped text for attributes (aria-label) — an alias kept for intent. */
+const plain = esc;
 
-/* {{placeholder}} -> marked span while DRAFT, plain text once you ship */
-const t = s => esc(s).replace(/\{\{([\s\S]+?)\}\}/g,
-  (_, inner) => DRAFT ? '<span class="ph" title="placeholder — replace me">' + inner + "</span>" : inner);
+/* body text — HTML-escaped. */
+const t = esc;
 
-/* a string is a paragraph; an array is a list */
-const prose = v => Array.isArray(v)
-  ? "<ul>" + v.map(li => "<li>" + t(li) + "</li>").join("") + "</ul>"
-  : "<p>" + t(v) + "</p>";
+/* shared code renderer: a small, language-agnostic tokeniser. It escapes the
+   source and wraps recognised tokens in coloured spans — keywords, strings,
+   numbers, comments, and function/builtin names (see the .tok-* CSS). It is a
+   heuristic, not a real parser: it leans on patterns Python, JS, and most
+   pseudocode share, so an imported .py reads like the reference and hand-typed
+   pseudocode picks up the same colour with no annotation. Your own {{! …}}
+   marker still forces a fragment dim. */
+const renderCode = (() => {
+  const KW = new Set((
+    "import from as def class lambda return yield pass break continue " +
+    "if elif else for while in is not and or with try except finally raise " +
+    "assert del global nonlocal async await True False None " +
+    "function fun func var let const new delete typeof instanceof " +
+    "foreach then end do begin int void bool char double long null true false " +
+    "public private protected static void self this"
+  ).split(/\s+/));
+  const BUILTIN = new Set((
+    "print len range int float str list dict set tuple bool abs min max sum " +
+    "round enumerate zip map filter sorted reversed open super isinstance type " +
+    "input format append extend keys values items"
+  ).split(/\s+/));
+  // ordered alternation: marker | triple-string | comment | string | number | decorator | word
+  const RE = /(\{\{!\s*[\s\S]*?\}\})|("""[\s\S]*?"""|'''[\s\S]*?''')|(#[^\n]*|\/\/[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|\b(\d[\d_]*\.?\d*(?:[eE][+-]?\d+)?j?)\b|(@[A-Za-z_]\w*)|([A-Za-z_]\w*)/g;
+  const wrap = (cls, txt) => '<span class="' + cls + '">' + esc(txt) + "</span>";
+  return src => {
+    const s = String(src).replace(/^\n/, "").replace(/\s+$/, "");
+    let out = "", last = 0, m;
+    RE.lastIndex = 0;
+    while ((m = RE.exec(s))) {
+      if (m.index > last) out += esc(s.slice(last, m.index));
+      if (m[1] !== undefined)      out += wrap("c", m[1].replace(/^\{\{!\s*/, "").replace(/\}\}$/, ""));
+      else if (m[2] !== undefined) out += wrap("tok-str", m[2]);
+      else if (m[3] !== undefined) out += wrap("c", m[3]);
+      else if (m[4] !== undefined) out += wrap("tok-str", m[4]);
+      else if (m[5] !== undefined) out += wrap("tok-num", m[5]);
+      else if (m[6] !== undefined) out += wrap("tok-fn", m[6]);
+      else {                                    // m[7]: a bare word
+        const w = m[7];
+        if (KW.has(w))              out += wrap("tok-kw", w);
+        else if (BUILTIN.has(w))    out += wrap("tok-fn", w);
+        else if (s[RE.lastIndex] === "(") out += wrap("tok-fn", w);  // looks like a call
+        else                        out += esc(w);
+      }
+      last = RE.lastIndex;
+    }
+    out += esc(s.slice(last));
+    return out;
+  };
+})();
+
+/* a fenced code / pseudocode block from an INLINE string. A `backtick template
+   literal` keeps your line breaks and indentation exactly as typed — plus an
+   optional caption (filename, language, or "pseudocode"). */
+const codeBlock = (src, caption) =>
+  '<figure class="code">' +
+    (caption ? '<figcaption>' + esc(caption) + "</figcaption>" : "") +
+    "<pre><code>" + renderCode(src) + "</code></pre>" +
+  "</figure>";
+
+/* the same block, but the code lives in a SEPARATE FILE (code/pricer.py,
+   notes/hello.txt, …). The file is fetched after the page paints — see
+   hydrateCode() — so the source stays somewhere you can edit and run it.
+   The caption defaults to the filename; pass lang: "" to hide it, or
+   lang: "python" to set it. NOTE: fetch needs the page served over http,
+   not opened as file:// — run `python3 -m http.server` in this folder. */
+const codeFileBlock = (file, lang) => {
+  const caption = lang !== undefined ? lang : file.split("/").pop();
+  return '<figure class="code" data-src="' + esc(file) + '">' +
+    (caption ? '<figcaption>' + esc(caption) + "</figcaption>" : "") +
+    '<pre><code class="code-loading">loading ' + esc(file) + "…</code></pre>" +
+  "</figure>";
+};
+
+/* a string is a paragraph; an array of strings is a list; { code } or
+   { codeFile } is a code block. An array may also mix strings and code
+   objects, in which case each renders in order (paragraphs + code blocks)
+   instead of a list. */
+const codeFrom = x =>
+    x.codeFile !== undefined ? codeFileBlock(x.codeFile, x.lang)
+  : x.code     !== undefined ? codeBlock(x.code, x.lang)
+  : null;
+
+const prose = v => {
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const c = codeFrom(v);
+    if (c !== null) return c;
+  }
+  if (Array.isArray(v)) {
+    if (v.some(x => x && typeof x === "object"))
+      return v.map(x =>
+        typeof x === "string" ? "<p>" + t(x) + "</p>"
+        : Array.isArray(x) ? "<ul>" + x.map(li => "<li>" + t(li) + "</li>").join("") + "</ul>"
+        : (x && codeFrom(x)) || "").join("");
+    return "<ul>" + v.map(li => "<li>" + t(li) + "</li>").join("") + "</ul>";
+  }
+  return "<p>" + t(v) + "</p>";
+};
 
 const tags = list => !list || !list.length ? "" :
   '<ul class="tags">' + list.map(x =>
     '<li class="tag">' + t(x.role) + ' <span class="yr">' + t(x.years) + "</span></li>").join("") + "</ul>";
 
 const link = l => {
-  if (!l.href) return '<span class="ph" title="no link yet">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>";
+  if (!l.href) return '<span class="ph" title="no link yet">' + t(l.label) + "</span>";
   /* open everything but mailto: in a new tab, like extracurriculars do */
   const attrs = /^https?:/.test(l.href) ? ' target="_blank" rel="me noopener"'
               : /^mailto:/.test(l.href) ? ""
@@ -688,8 +1036,7 @@ const link = l => {
                    the logo is recolored to a flat palette tone with no fringe.
                    mask-type="alpha" (over the newer CSS mask-mode property) is
                    the old, reliably-supported way to force alpha rather than
-                   luminance masking; luminance would mask a dark logo inside-out.
-     letters    -> a boxed two-letter symbol. */
+                   luminance masking; luminance would mask a dark logo inside-out. */
 let markCount = 0;
 const mark = ic => {
   if (!ic) return "";
@@ -707,11 +1054,12 @@ const mark = ic => {
       '<span class="mark mark--svg mark--img" style="--tint-mask:url(#' + maskId + ')" title="' + esc(ic.title) + '" aria-hidden="true"></span>'
     );
   }
-  return '<span class="mark" title="' + esc(ic.title) + '" aria-hidden="true">' + esc(ic.mark) + "</span>";
+  return "";
 };
 
-const block = (rail, body, isHeading) =>
-  '<section class="block"' + (isHeading ? ' aria-labelledby="' + isHeading + '"' : "") + ">" +
+const block = (rail, body, isHeading, secId) =>
+  '<section class="block"' + (secId ? ' id="' + secId + '"' : "") +
+    (isHeading ? ' aria-labelledby="' + isHeading + '"' : "") + ">" +
     '<div class="rail' + (rail ? "" : " rail--empty") + '">' + rail + "</div>" +
     '<div class="body">' + body + "</div>" +
   "</section>";
@@ -722,7 +1070,8 @@ function home() {
     '<p class="rail-note">' + t(PROFILE.railNote) + "</p>",
     '<h1 class="name" tabindex="-1">' + t(PROFILE.name) + "</h1>" +
     '<p class="lede">' + t(PROFILE.lede[0]) + "</p>" +
-    '<p class="lede-2">' + t(PROFILE.lede[1]) + "</p>"
+    '<p class="lede-2">' + t(PROFILE.lede[1]) + "</p>" +
+    filterControl()
   );
 
   const work     = entrySection(WORK,     "work experience", "h-work", "work");
@@ -731,15 +1080,15 @@ function home() {
   const exps = block(
     '<h2 class="rail-label" id="h-exp">extracurriculars</h2>',
     '<ul class="projects">' + EXTRACURRICULARS.map(e =>
-      '<li class="project">' +
+      '<li class="project" data-subjects="' + esc((e.subjects || []).join(" ")) + '">' +
         '<span class="exp-name">' + t(e.name) + "</span>" +
         (e.links || []).map(l => l.href
           ? '<a class="exp-link" href="' + esc(l.href) + '" target="_blank" rel="noopener">' + t(l.label) + " \u2197</a>"
-          : '<span class="exp-link ph">' + t(l.label) + (DRAFT ? " — add link" : "") + "</span>").join("") +
+          : '<span class="exp-link ph">' + t(l.label) + "</span>").join("") +
         '<span class="exp-year">' + t(e.year) + "</span>" +
         '<p class="exp-desc">' + t(e.desc) + "</p>" +
       "</li>").join("") + "</ul>",
-    "h-exp"
+    "h-exp", "sec-extras"
   );
 
   const contact = block(
@@ -753,13 +1102,39 @@ function home() {
   return { title: PROFILE.name, html: intro + work + projects + exps + contact };
 }
 
+/* the filter control — a custom listbox in the page's mono voice. It rides
+   inline under the intro (no section header of its own). Behaviour (open/close,
+   keyboard, and the entry-hiding itself) is wired in setupFilter(), which runs
+   after each home paint. */
+function filterControl() {
+  const opts = [{ key: "", label: "everything" }].concat(SUBJECTS);
+  return (
+    '<div class="filter-row">' +
+      '<div class="filter" id="filter" data-open="false">' +
+        '<button class="filter-btn" id="filterBtn" type="button" aria-haspopup="listbox" ' +
+          'aria-expanded="false" aria-controls="filterMenu">' +
+          '<span class="filter-label" id="filterLabel">everything</span>' +
+          '<span class="filter-caret" aria-hidden="true">▾</span>' +
+        "</button>" +
+        '<ul class="filter-menu" id="filterMenu" role="listbox" aria-label="Filter entries by subject">' +
+          opts.map(o =>
+            '<li class="filter-opt" role="option" tabindex="-1" data-subject="' + esc(o.key) + '" aria-selected="false">' +
+              '<span class="filter-dot" aria-hidden="true"></span>' + esc(o.label) +
+            "</li>").join("") +
+        "</ul>" +
+      "</div>" +
+      '<span class="filter-hint" id="filterHint">showing everything</span>' +
+    "</div>"
+  );
+}
+
 /* an entry section \u2014 the rich, subpage-linked list. WORK and PROJECTS both use
    it; only the label, heading id and route prefix differ. */
 function entrySection(list, label, id, route) {
   return block(
     '<h2 class="rail-label" id="' + id + '">' + label + "</h2>",
     '<ol class="entries">' + list.map(p =>
-      '<li class="entry">' +
+      '<li class="entry" data-subjects="' + esc((p.subjects || []).join(" ")) + '">' +
         /* the stretched overlay link \u2014 covers the whole card, navigates to
            the subpage. Empty, so its accessible name is the aria-label. */
         '<a class="entry-hit" href="#/' + route + '/' + esc(p.slug) + '" aria-label="' + plain(p.title) + '"></a>' +
@@ -772,7 +1147,7 @@ function entrySection(list, label, id, route) {
         tags(p.tags) +
         '<p class="entry-blurb">' + t(p.blurb) + "</p>" +
       "</li>").join("") + "</ol>",
-    id
+    id, "sec-" + route
   );
 }
 
@@ -814,7 +1189,7 @@ function detail(sec, slug) {
     if (!val) return;
     const id = "h-" + n;
     html += block(
-      '<h2 class="rail-label" id="' + id + '">' + label + "</h2>",
+      '<h2 class="rail-label rail-label--prose" id="' + id + '">' + label + "</h2>",
       '<div class="prose">' + prose(val) + "</div>",
       id
     );
@@ -830,7 +1205,7 @@ function detail(sec, slug) {
 
   html += block("", '<nav class="pager" aria-label="Project navigation">' +
       '<a href="#/">\u2190 all ' + sec.back + "</a>" +
-      '<a class="nxt" href="#/' + sec.route + "/" + esc(next.slug) + '"><span>next</span>' + t(next.title) + " \u2192</a>" +
+      '<a class="nxt" href="#/' + sec.route + "/" + esc(next.slug) + '"><span class="nxt-col"><span class="nxt-lead">next</span><span class="nxt-title">' + t(next.title) + '</span></span><span class="nxt-arw">\u2192</span></a>' +
     "</nav>");
 
   return { title: p.title + " — " + PROFILE.name, html };
@@ -873,6 +1248,184 @@ function paint() {
   const h1 = view.querySelector("h1");
   if (h1) h1.focus({ preventScroll: true });
   indexPin();
+  hydrateCode();
+  setupFilter();
+}
+
+/* fills any code block whose source is an external file (a { codeFile } in the
+   content). Runs after paint, fetches each file, drops it in. Fails soft with
+   a one-line hint when the page is opened as file://, where fetch is blocked. */
+async function hydrateCode() {
+  for (const fig of view.querySelectorAll(".code[data-src]")) {
+    const src = fig.getAttribute("data-src");
+    const codeEl = fig.querySelector("code");
+    fig.removeAttribute("data-src");   /* mark handled, so it isn't refetched */
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error(res.status);
+      codeEl.className = "";
+      codeEl.innerHTML = renderCode(await res.text());
+    } catch (e) {
+      codeEl.className = "code-err";
+      codeEl.textContent = "couldn’t load " + src +
+        " — serve this folder over http (run: python3 -m http.server) rather than opening the file directly.";
+    }
+  }
+}
+
+/* ---------- the filter ----------
+   setCollapsed animates one element open or shut. It measures the live height,
+   then runs a height + margin + padding + opacity animation with the Web
+   Animations API, and only sets display:none once the shut animation finishes —
+   so a hidden entry takes up no space and leaves no gap. Reduced motion, or a
+   non-animated (re)paint, gets an instant toggle. State lives on the element
+   (_collapsed / _anim), so repeated calls are idempotent and interruptible. */
+const EASE = "cubic-bezier(.4, 0, .2, 1)";
+const COLLAPSE_MS = 260;
+
+function setCollapsed(el, collapsed, animate) {
+  const settled = el._collapseInit && el._collapsed === collapsed && !el._anim;
+  if (settled) return;
+  el._collapseInit = true;
+  el._collapsed = collapsed;
+  if (el._anim) { el._anim.cancel(); el._anim = null; }
+  el.classList.toggle("is-collapsed", collapsed);
+
+  if (!animate || reduced.matches) {
+    el.style.display = collapsed ? "none" : "";
+    el.style.overflow = ""; el.style.height = "";
+    return;
+  }
+
+  if (collapsed) {
+    const h = el.getBoundingClientRect().height;
+    const cs = getComputedStyle(el);
+    el.style.overflow = "hidden";
+    el._anim = el.animate([
+      { height: h + "px", opacity: 1, marginTop: cs.marginTop, marginBottom: cs.marginBottom,
+        paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom },
+      { height: "0px", opacity: 0, marginTop: "0px", marginBottom: "0px",
+        paddingTop: "0px", paddingBottom: "0px" }
+    ], { duration: COLLAPSE_MS, easing: EASE });
+    el._anim.onfinish = () => { el.style.display = "none"; el.style.overflow = ""; el._anim = null; };
+  } else {
+    el.style.display = "";
+    el.style.overflow = "hidden";
+    const cs = getComputedStyle(el);
+    /* getBoundingClientRect gives the exact sub-pixel, border-box height, so the
+       final keyframe lands precisely where the natural layout does — no snap when
+       the inline height is cleared on finish. (scrollHeight rounds and drops the
+       border, which is what caused the little jag on reappear.) */
+    const h = el.getBoundingClientRect().height;
+    el._anim = el.animate([
+      { height: "0px", opacity: 0, marginTop: "0px", marginBottom: "0px",
+        paddingTop: "0px", paddingBottom: "0px" },
+      { height: h + "px", opacity: 1, marginTop: cs.marginTop, marginBottom: cs.marginBottom,
+        paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom }
+    ], { duration: COLLAPSE_MS, easing: EASE });
+    el._anim.onfinish = () => { el.style.overflow = ""; el.style.height = ""; el._anim = null; };
+  }
+}
+
+/* one document-level handler closes the menu on an outside click / Escape.
+   Bound once; it looks the control up by id so it survives repaints. */
+let filterDocBound = false;
+function bindFilterDoc() {
+  if (filterDocBound) return;
+  filterDocBound = true;
+  const shut = () => {
+    const r = document.getElementById("filter");
+    if (r) { r.dataset.open = "false"; r.querySelector(".filter-btn").setAttribute("aria-expanded", "false"); }
+  };
+  document.addEventListener("click", e => {
+    const r = document.getElementById("filter");
+    if (r && !r.contains(e.target)) shut();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") shut(); });
+}
+
+/* wires the freshly-painted filter control and applies the active subject. Runs
+   after every home paint; a no-op on pages without the control. */
+function setupFilter() {
+  const root = document.getElementById("filter");
+  if (!root) return;
+  bindFilterDoc();
+
+  const btn = document.getElementById("filterBtn");
+  const menu = document.getElementById("filterMenu");
+  const labelEl = document.getElementById("filterLabel");
+  const hint = document.getElementById("filterHint");
+  const opts = Array.from(menu.querySelectorAll(".filter-opt"));
+
+  const groups = ["sec-work", "sec-project", "sec-extras"].map(id => {
+    const blockEl = document.getElementById(id);
+    if (!blockEl) return null;
+    return { blockEl, items: Array.from(blockEl.querySelectorAll("[data-subjects]")) };
+  }).filter(Boolean);
+
+  const labelFor = key => (opts.find(o => o.dataset.subject === key)?.textContent || "everything").trim();
+  const matches = (item, subject) =>
+    subject === "" || (item.getAttribute("data-subjects") || "").split(/\s+/).includes(subject);
+
+  function apply(subject, animate) {
+    activeSubject = subject;
+    let shown = 0;
+
+    groups.forEach(g => {
+      const keep = g.items.filter(it => matches(it, subject));
+      const wasEmpty = g.blockEl._collapsed === true;
+      const nowEmpty = keep.length === 0;
+
+      if (nowEmpty) {
+        setCollapsed(g.blockEl, true, animate);
+      } else if (wasEmpty) {
+        /* the whole section was hidden: set item states instantly, then slide
+           the section in as one piece. */
+        g.items.forEach(it => setCollapsed(it, !keep.includes(it), false));
+        setCollapsed(g.blockEl, false, animate);
+      } else {
+        setCollapsed(g.blockEl, false, false);
+        g.items.forEach(it => setCollapsed(it, !keep.includes(it), animate));
+      }
+      shown += keep.length;
+    });
+
+    labelEl.textContent = labelFor(subject);
+    labelEl.classList.toggle("is-active", subject !== "");
+    opts.forEach(o => o.setAttribute("aria-selected", String(o.dataset.subject === subject)));
+    if (hint) hint.textContent = subject === ""
+      ? "showing everything"
+      : (shown === 1 ? "1 entry" : shown + " entries") + " tagged " + labelFor(subject);
+
+    indexPin();
+  }
+
+  const setOpen = on => {
+    root.dataset.open = String(on);
+    btn.setAttribute("aria-expanded", String(on));
+    if (on) { const sel = opts.find(o => o.getAttribute("aria-selected") === "true"); (sel || opts[0]).focus(); }
+  };
+  const focusOpt = i => opts[Math.max(0, Math.min(opts.length - 1, i))].focus();
+  const choose = o => { apply(o.dataset.subject, true); setOpen(false); btn.focus(); };
+
+  btn.addEventListener("click", e => { e.stopPropagation(); setOpen(root.dataset.open !== "true"); });
+  /* Enter/Space are left to the native button click (which toggles above); only
+     the arrow keys need handling, to open straight into the list. */
+  btn.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setOpen(true); }
+  });
+  opts.forEach((o, i) => {
+    o.addEventListener("click", () => choose(o));
+    o.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(o); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); focusOpt(i + 1); }
+      else if (e.key === "ArrowUp")   { e.preventDefault(); focusOpt(i - 1); }
+      else if (e.key === "Home")      { e.preventDefault(); focusOpt(0); }
+      else if (e.key === "End")       { e.preventDefault(); focusOpt(opts.length - 1); }
+    });
+  });
+
+  apply(activeSubject, false);   /* reflect persisted selection, no animation */
 }
 
 /* ---------- the pin ---------- */
@@ -883,7 +1436,7 @@ let sections = [];
 function indexPin() {
   sections = Array.from(view.querySelectorAll(".block"))
     .map(el => ({ el: el, label: el.querySelector(".rail-label") }))
-    .filter(s => s.label)
+    .filter(s => s.label && s.el.id !== "sec-filter")
     .map(s => ({ el: s.el, text: s.label.textContent }));
   updatePin();
 }
@@ -918,12 +1471,6 @@ function route(first) {
 
 addEventListener("hashchange", () => route(false));
 route(true);
-
-if (DRAFT) {
-  document.getElementById("banner").innerHTML =
-    '<div class="banner"><b>draft.</b> anything with a <span class="ph">dotted underline</span> is placeholder ' +
-    "copy written from your r\u00e9sum\u00e9 — replace or delete it. set <b>DRAFT = false</b> in the source to remove this banner and the marks.</div>";
-}
 </script>
 </body>
 </html>
