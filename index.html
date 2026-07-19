@@ -496,6 +496,27 @@ a:focus-visible,
 }
 .proj-blurb { margin: .8rem 0 0; color: var(--ink-muted); font-size: 1.06rem; }
 .proj-title + .tags { margin-top: 1.2rem; }
+
+/* a representative image + caption, sitting below the title/blurb and above the
+   prose. The image is centered and its width is set inline per-entry (figure.width
+   in the CONTENT block); it never overflows the measure. The caption below is
+   italic, smaller, lighter, and centered. */
+.figure { margin: 1.9rem 0 -2.5rem; text-align: center; }   /* negative bottom trims the gap to the prose below */
+.figure-img {
+  display: block;
+  margin: 0 auto;
+  width: 100%;          /* the default; overridden inline by figure.width */
+  max-width: 100%;      /* never wider than the content column */
+  height: auto;
+  border-radius: 3px;
+}
+.figure-cap {
+  margin-top: .3rem;
+  font-style: italic;
+  font-size: .85rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
 .back { text-decoration: none; color: var(--ink-muted); transition: color var(--step) ease; }
 .back:hover { color: var(--accent); }
 .prose ul { list-style: none; }
@@ -681,6 +702,14 @@ h1[tabindex]:focus { outline: none; }
                      entries that don't match the chosen subject. Leave it off
                      and the entry only shows under "everything". Add or rename a
                      subject in one place: the SUBJECTS list.
+   Image          -> figure: { … } on a WORK or PROJECT shows a representative
+                     image on its subpage, below the title/blurb and above the
+                     prose. Set the width and add a caption:
+                       figure: { img: "photos/earnings.png",
+                                 caption: "…", width: "80%" }
+                     width takes a CSS value ("80%", "18rem") or a plain number
+                     (px); leave it off for full width. The image and caption are
+                     centered; the caption is italic, smaller and lighter.
    Institution    -> icon: { … } draws a logo next to the title. Either paste
                      an SVG:
                        icon: { title: "Stanford University", svg: "<svg …>…</svg>" }
@@ -728,8 +757,13 @@ const WORK = [
     blurb: "Biotech and pharma investment",
     subjects: [ "economics", "biology", "cs"],
     tags: [ { role: "analyst", years: "summer 2026" } ],
+    figure: {
+      img: "photos/earnings.png",
+      caption: "earnings preview; numbers changed for proprietary reasons",
+      width: "100%"
+    },
     role: "Analyst",
-    did: "Still doing it as we speak! Check back later :)",
+    did: "still doing it! check back later",
   },
   {
     slug: "berkeley-economics",
@@ -738,10 +772,15 @@ const WORK = [
     blurb: "Using NLPs to analyze the effect of private equity on California care facilities",
     subjects: [ "economics", "cs" ],
     tags: [ { role: "research assistant", years: "2026—" } ],
+    figure: {
+      img: "photos/ccld.png",
+      caption: "results.csv",
+      width: "95%"
+    },
     context: "",
     role: "",
     did: [
-      "Coded an NLP program in Python to parse through hundreds of thousands of care facility reports and classify detected offenses by severity. This project is still in progress!",
+      "Coded an NLP program in Python to parse through hundreds of thousands of care facility reports and classify detected offenses by severity. Project is still in progress!",
       { codeFile: "files/nlp.py", lang: "python pseudocode" }
     ],
   },
@@ -764,6 +803,11 @@ const WORK = [
     blurb: "Screening novel small-molecule drug candidates for Parkinson's Disease",
     subjects: [ "biology" ],
     tags: [ { role: "research intern", years: "summer 2024" } ],
+    figure: {
+      img: "photos/cellculture.jpg",
+      caption: "cell culture",
+      width: "90%"
+    },
     context: "Parkinson's Disease is commonly associated with diminished dopamine production and high levels of neuroinflammation. Consequently, drugs that upregulate dopaminergic pathways while reducing inflammation are incredibly promising. Nuclear receptors such as Nurr1 are known to regulate genes in these pathways, which makes them a compelling target for developing new small molecule therapies.",
     did: [
       "At the England Lab, I screened multiple small-molecule compounds designed to target Nurr1 and induce different gene expression changes, while presenting my findings to the lab each week. In particular, I",
@@ -870,6 +914,11 @@ driver.quit()`, lang: "python pseudocode" }
     title: "Independent study on photoprotection",
     blurb: "Spent one semester studying how plants survive excess light conditions",
     subjects: [ "biology" ],
+    figure: {
+      img: "photos/kromdijk.jpeg",
+      caption: "Kromdijk et al. 2016",
+      width: "90%"
+    },
     context: "We rarely think about plants getting too much sunlight. But when energy from UV radiation exceeds what photosynthesis can handle, what happens is determined in fractions of a second by a specialized crew of pigments. This process is called \"photoprotection.\"",
     did: "Over one semester, a two friends and I approached photoprotection from three directions: cell biology (thylakoid organization, xanthophyll cycle), organic chemistry (quenching via conjugation), and physical chemistry. Synthesized our research into a presentation for high school students (ranging from freshmen to seniors).",
     links: [ { label: "End-of-Year Presentation", href: "files/photoprotection.pdf", home: "slides" } ]
@@ -1054,6 +1103,21 @@ const mark = ic => {
   return "";
 };
 
+/* a representative image with an italic caption, shown on a detail page between
+   the blurb and the prose. `figure.width` sets the image width (a number is px,
+   a string like "80%" or "18rem" is used as-is); it defaults to full width and
+   never exceeds the content column. Both image and caption are centered. */
+const figureBlock = fig => {
+  if (!fig || !fig.img) return "";
+  const w = fig.width != null
+    ? ' style="width:' + esc(typeof fig.width === "number" ? fig.width + "px" : fig.width) + '"'
+    : "";
+  return '<figure class="figure">' +
+    '<img class="figure-img" src="' + esc(fig.img) + '" alt="' + plain(fig.caption || fig.alt || "") + '"' + w + ">" +
+    (fig.caption ? '<figcaption class="figure-cap">' + t(fig.caption) + "</figcaption>" : "") +
+    "</figure>";
+};
+
 const block = (rail, body, isHeading, secId) =>
   '<section class="block"' + (secId ? ' id="' + secId + '"' : "") +
     (isHeading ? ' aria-labelledby="' + isHeading + '"' : "") + ">" +
@@ -1173,7 +1237,8 @@ function detail(sec, slug) {
     '<p class="rail-note"><a class="back" href="#/">\u2190 ' + sec.back + "</a></p>",
     '<div class="title-row"><h1 class="proj-title" tabindex="-1">' + t(p.title) + "</h1>" + mark(p.icon) + "</div>" +
     tags(p.tags) +
-    '<p class="proj-blurb">' + t(p.blurb) + "</p>"
+    '<p class="proj-blurb">' + t(p.blurb) + "</p>" +
+    figureBlock(p.figure)
   );
 
   const parts = [
